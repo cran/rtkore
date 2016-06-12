@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -709,6 +709,62 @@ class Univariate<TContainer1D, Real>
     Variable<Real> viceciles_;    ///< viceciles (5%)
     Variable<Real> percentiles_;  ///< percentiles (1%)
 };
+
+
+///* @ingroup StatDesc
+// *  @brief Computation of the univariate Statistics of a Integer Variable.
+// *
+// *  This is a specialization of the class Univariate for the type @c Integer.
+// *
+// *  The template parameter @c TContainer1D is the type of container
+// *  used for storing the data : It should derive from @c ITContainer and
+// *  contain elements of type Real.
+// *
+// *  This specialization propose also statics methods for computing
+// *  the (weighted) mean and the (weighted) variance.
+// **/
+//template < class TContainer1D>
+//class Univariate<TContainer1D, Integer>
+//{
+//    /** Default constructor
+//     *  Copy locally the variable V and set dimensions. The statistics
+//     *  are then computed.
+//     *  @param V variable
+//     *  @param sorted @c true if the variable is sorted, @c false otherwise
+//     **/
+//    Univariate( TContainer1D const& V, bool sorted = false)
+//    {
+//
+//    }
+//    /** get the number of samples */
+//    inline const int nbSamples() const {return nbSamples_;}
+//    /** get the number of available samples (not missing) */
+//    inline const int nbAvailableSamples() const {return nbAvailable_;}
+//    /** get the number of missing samples */
+//    inline const int nbMissingSamples() const {return nbMiss_;}
+//
+//  protected:
+//    // dimensions
+//    int    nbSamples_;    ///< Number of samples
+//    int    nbAvailable_; ///< Number of Available samples
+//    int    nbMiss_;      ///< Number of missing samples
+//
+//    // containers
+//    VectorX V_;      ///< local copy of the variable
+//    VectorX W_;      ///< local copy of the weights
+//
+//    // Some flag about the internal state of the object
+//    bool weighted_;       ///< Samples are weighted ?
+//    bool sorted_;         ///< Samples are sorted ?
+//
+//    // statistics
+//    Integer min_;            ///< Min of the variable
+//    Integer max_;            ///< Max of the variable
+//    Integer amax_;           ///< Absolute maximal value
+//
+//    Real mean_;           ///< mean of the variable
+//    Real median_;         ///< median of the variable
+//};
 
 }  // namespace Stat
 

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -36,6 +36,32 @@
 #define STK_STAT_FUNCTORS_H
 
 #include <Arrays/include/STK_ExprBaseFunctors.h>
+
+#define FUNCTION_ON_ARRAY(funct, Op) \
+template< class Derived> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByColType \
+funct(Derived const& A) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::ColOp(A)();} \
+template< class Derived, class Weights> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByColType \
+funct(Derived const& A, Weights const& w) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::ColWeightedOp(A)(w);} \
+template< class Derived> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByColType \
+funct##ByCol(Derived const& A) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::ColOp(A)();} \
+template< class Derived, class Weights> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByColType \
+funct##ByCol(Derived const& A, Weights const& w) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::ColWeightedOp(A)(w);} \
+template< class Derived> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByRowType \
+funct##ByRow(Derived const& A) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::RowOp(A)();} \
+template< class Derived, class Weights> \
+typename hidden::ApplyFunctorSelector<Derived, Op >::resultByRowType \
+funct##ByRow(Derived const& A, Weights const& w) \
+{ return typename hidden::ApplyFunctorSelector<Derived, Op>::RowWeightedOp(A)(w);}
 
 
 namespace STK
@@ -713,25 +739,7 @@ struct VarianceWithFixedMeanSafeOp
  *  @param A the array
  *  @return the minimal value(s) of A or NA if there is no available value.
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MinOp >::resultByColType
-min(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MinOp >::resultByColType
-min(Derived const& A, Weights const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MinOp >::resultByRowType
-minByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MinOp >::resultByRowType
-minByRow(Derived const& A, Weights const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(min, MinOp)
 
 /** @ingroup StatDesc
  *  Compute safely the minimal(s) [weighted] value(s) of A. If A is a row-vector
@@ -745,25 +753,7 @@ minByRow(Derived const& A, Weights const& w)
  *  @return the minimal value(s) of A or NA if there is no available
  *  value.
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MinSafeOp >::resultByColType
-minSafe(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinSafeOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MinSafeOp >::resultByColType
-minSafe(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinSafeOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MinSafeOp >::resultByRowType
-minSafeByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinSafeOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MinSafeOp >::resultByRowType
-minSafeByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MinSafeOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(minSafe, MinSafeOp)
 
 /** @ingroup StatDesc
  *  Compute the maximal(s) value(s) of A. If A is a row-vector or a
@@ -776,25 +766,7 @@ minSafeByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @return the maximal value(s) of A or NA if there is no available
  *  value.
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MaxOp >::resultByColType
-max(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MaxOp >::resultByColType
-max(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MaxOp >::resultByRowType
-maxByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MaxOp >::resultByRowType
-maxByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(max, MaxOp)
 
 /** @ingroup StatDesc
  *  Compute safely the maximal(s) value(s) of A. If A is a row-vector or a
@@ -806,25 +778,7 @@ maxByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @return the maximal value(s) of A or NA if there is no available
  *  value.
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp >::resultByColType
-maxSafe(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp >::resultByColType
-maxSafe(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp >::resultByRowType
-maxSafeByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp >::resultByRowType
-maxSafeByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MaxSafeOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(maxSafe, MaxSafeOp)
 
 /** @ingroup StatDesc
  *  Compute the sum of A. If A is a row-vector or a
@@ -835,25 +789,7 @@ maxSafeByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @param A the data
  *  @return the mean(s) or NA if there is no available value
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, SumOp >::resultByColType
-sum(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, SumOp >::resultByColType
-sum(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, SumOp >::resultByRowType
-sumByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, SumOp >::resultByRowType
-sumByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(sum, SumOp)
 
 /** @ingroup StatDesc
  *  Compute safely the mean(s) value(s) of A. If A is a row-vector or a
@@ -864,25 +800,7 @@ sumByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @param A the data
  *  @return the mean(s) or NA if there is no available value
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, SumSafeOp >::resultByColType
-sumSafe(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumSafeOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, SumSafeOp >::resultByColType
-sumSafe(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumSafeOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, SumSafeOp >::resultByRowType
-sumSafeByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumSafeOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, SumSafeOp >::resultByRowType
-sumSafeByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, SumSafeOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(sumSafe, SumSafeOp)
 
 /** @ingroup StatDesc
  *  Compute the mean(s) value(s) of A. If A is a row-vector or a
@@ -894,25 +812,7 @@ sumSafeByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @param A the data
  *  @return the mean(s) or NA if there is no available value
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MeanOp >::resultByColType
-mean(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MeanOp >::resultByColType
-mean(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MeanOp >::resultByRowType
-meanByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MeanOp >::resultByRowType
-meanByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(mean, MeanOp)
 
 /** @ingroup StatDesc
  *  Compute safely the mean(s) value(s) of A. If A is a row-vector or a
@@ -924,25 +824,7 @@ meanByRow(Derived const& A, ExprBase<Weights> const& w)
  *  @param A the data
  *  @return the mean(s) or NA if there is no available value
  **/
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp >::resultByColType
-meanSafe(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp>::ColOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp >::resultByColType
-meanSafe(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp>::ColWeightedOp(A)(w);}
-
-template< class Derived>
-typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp >::resultByRowType
-meanSafeByRow(Derived const& A)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp>::RowOp(A)();}
-
-template< class Derived, class Weights>
-typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp >::resultByRowType
-meanSafeByRow(Derived const& A, ExprBase<Weights> const& w)
-{ return typename hidden::ApplyFunctorSelector<Derived, MeanSafeOp>::RowWeightedOp(A)(w);}
+FUNCTION_ON_ARRAY(meanSafe, MeanSafeOp)
 
 /** @ingroup StatDesc
  *  Compute the variance(s) value(s) of A. If A is a row-vector or a
@@ -963,6 +845,16 @@ variance(Derived const& A, bool unbiased = false)
 template< class Derived, class Weights>
 typename hidden::ApplyFunctorSelector<Derived, VarianceOp >::resultByColType
 variance(Derived const& A, ExprBase<Weights> const& w, bool unbiased = false)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceOp>::ColWeightedOp(A)(w, unbiased);}
+
+template< class Derived>
+typename hidden::ApplyFunctorSelector<Derived, VarianceOp >::resultByColType
+varianceByCol(Derived const& A, bool unbiased = false)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceOp>::ColOp(A)(unbiased);}
+
+template< class Derived, class Weights>
+typename hidden::ApplyFunctorSelector<Derived, VarianceOp >::resultByColType
+varianceByCol(Derived const& A, ExprBase<Weights> const& w, bool unbiased = false)
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceOp>::ColWeightedOp(A)(w, unbiased);}
 
 template< class Derived>
@@ -999,6 +891,16 @@ varianceSafe(Derived const& A, ExprBase<Weights> const& w, bool unbiased = false
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp>::ColWeightedOp(A)(w, unbiased);}
 
 template< class Derived>
+typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp >::resultByColType
+varianceSafeByCol(Derived const& A, bool unbiased = false)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp>::ColOp(A)(unbiased);}
+
+template< class Derived, class Weights>
+typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp >::resultByColType
+varianceSafeByCol(Derived const& A, ExprBase<Weights> const& w, bool unbiased = false)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp>::ColWeightedOp(A)(w, unbiased);}
+
+template< class Derived>
 typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp >::resultByRowType
 varianceSafeByRow(Derived const& A, bool unbiased = false)
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceSafeOp>::RowOp(A)(unbiased);}
@@ -1032,6 +934,16 @@ varianceWithFixedMean(Derived const& A, ExprBase<Weights> const& w, MeanType con
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp>::ColWeightedOp(A)(w, mean, unbiased);}
 
 template< class Derived, class MeanType>
+typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp >::resultByColType
+varianceWithFixedMeanByCol(Derived const& A, MeanType const& mean, bool unbiased)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp>::ColOp(A)(mean, unbiased);}
+
+template< class Derived, class MeanType, class Weights>
+typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp >::resultByColType
+varianceWithFixedMeanByCol(Derived const& A, ExprBase<Weights> const& w, MeanType const& mean, bool unbiased)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp>::ColWeightedOp(A)(w, mean, unbiased);}
+
+template< class Derived, class MeanType>
 typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp >::resultByRowType
 varianceWithFixedMeanByRow(Derived const& A, MeanType const& mean, bool unbiased = false)
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanOp>::RowOp(A)(mean, unbiased);}
@@ -1061,6 +973,16 @@ varianceWithFixedMeanSafe( Derived const& A, ExprBase<Weights> const& w, MeanTyp
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp>::ColWeightedOp(A)(w, mean, unbiased);}
 
 template< class Derived, class MeanType>
+typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp >::resultByColType
+varianceWithFixedMeanSafeByCol( Derived const& A, MeanType const& mean, bool unbiased)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp>::ColOp(A)(mean, unbiased);}
+
+template< class Derived, class MeanType, class Weights>
+typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp >::resultByColType
+varianceWithFixedMeanSafeByCol( Derived const& A, ExprBase<Weights> const& w, MeanType const& mean, bool unbiased)
+{ return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp>::ColWeightedOp(A)(w, mean, unbiased);}
+
+template< class Derived, class MeanType>
 typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp >::resultByRowType
 varianceWithFixedMeanSafeByRow(Derived const& A, MeanType const& mean, bool unbiased)
 { return typename hidden::ApplyFunctorSelector<Derived, VarianceWithFixedMeanSafeOp>::RowOp(A)(mean, unbiased);}
@@ -1074,5 +996,7 @@ varianceWithFixedMeanSafeByRow(Derived const& A, ExprBase<Weights> const& w, Mea
 }  // namespace Stat
 
 }  // namespace STK
+
+#undef FUNCTION_ON_ARRAY
 
 #endif /*STK_STAT_FUNCTORS_H*/

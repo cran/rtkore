@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -132,6 +132,7 @@
 #include "STatistiK/include/STK_Stat_MultivariateReal.h"
 
 // perform the usual transformations on variables
+#include "STatistiK/include/STK_Stat_Factor.h"
 #include "STatistiK/include/STK_Stat_Transform.h"
 
 // Kernels
@@ -142,6 +143,7 @@
 #include "STatistiK/include/STK_Kernel_Linear.h"
 #include "STatistiK/include/STK_Kernel_Polynomial.h"
 #include "STatistiK/include/STK_Kernel_RationalQuadratic.h"
+#include "STatistiK/include/STK_Kernel_Hamming.h"
 
 #endif /*STATISTIK_H*/
 

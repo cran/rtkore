@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as
@@ -254,11 +254,14 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
 
     enum
     {
+      // TODO: structure_ is not part of the CAllocator class
+      //structure_ = hidden::Traits<Derived>::structure_,
+      orient_    = hidden::Traits<Derived>::orient_,
       sizeRows_  = hidden::Traits<Derived>::sizeRows_,
       sizeCols_  = hidden::Traits<Derived>::sizeCols_,
-      orient_    = hidden::Traits<Derived>::orient_,
       storage_   = hidden::Traits<Derived>::storage_
     };
+
     /** Type of the Range for the rows */
     typedef TRange<sizeRows_> RowRange;
     /** Type of the Range for the columns */

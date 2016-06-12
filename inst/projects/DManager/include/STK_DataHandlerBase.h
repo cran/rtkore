@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -23,7 +23,7 @@
 */
 
 /*
- * Project:  stkpp::
+ * Project:  stkpp::DManager
  * created on: 15 nov. 2013
  * Author:   iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
  **/
@@ -88,12 +88,7 @@ class DataHandlerBase : public IRecursiveTemplate<Derived>
      *  @return @c true if there exists an idData in the InfoMap, @c false
      *  otherwise.
      **/
-    bool getIdModelName(std::string const& idData, std::string& idModel) const;
-    /** @return the number of sample (the number of rows of the data) */
-    inline int nbSample() const { return this->asDerived().nbSampleImpl();}
-    /** @return the number of variables (the number of columns of the data) */
-    inline int nbVariable() const { return  this->asDerived().nbVariableImpl();}
-    /** write the info on os */
+    bool getIdModelName(std::string const& idData, std::string& idModel) const;    /** write the info on os */
     void writeInfo(ostream& os) const;
 
   protected:
@@ -125,7 +120,7 @@ bool DataHandlerBase<Derived>::addInfo(std::string const& idData, std::string co
   {
      if (ret.first->second != idModel)
      {
-#ifdef STK_MIXTURE_DEBUG
+#ifdef STK_DMANAGER_DEBUG
        stk_cerr << _T("In DataHandlerBase::addInfo, There exists an idData with a different idModel.\n");
 #endif
        return false;
@@ -145,10 +140,10 @@ template<class Derived>
 bool DataHandlerBase<Derived>::getIdModelName(std::string const& idData, std::string& idModel) const
 {
   bool res = false;
-  // show content
-  for (InfoMap::const_iterator it=info_.begin(); it!=info_.end(); ++it)
-  { if (it->first == idData) { idModel = it->second; res = true; break;}}
- return res;
+  // find idData
+  InfoMap::const_iterator it = info_.find(idData);
+  if (it != info_.end()) { idModel = it->second; res = true;}
+  return res;
 }
 
 

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -52,10 +52,14 @@
 #define STK_SLICEVISITORS_H
 
 #define STK_SLICEVISITORS(VISITOR, FUNC) \
- template< class Derived> \
+template< class Derived> \
 typename hidden::SliceVisitorSelector<Derived, hidden::VISITOR, Arrays::by_col_>::type_result \
 FUNC(Derived const& A) \
 { return typename hidden::SliceVisitorSelector<Derived, hidden::VISITOR , Arrays::by_col_>::VisitorOp(A);} \
+template< class Derived> \
+typename hidden::SliceVisitorSelector<Derived, hidden::VISITOR, Arrays::by_col_>::type_result \
+FUNC##ByCol(Derived const& A) \
+{ return typename hidden::SliceVisitorSelector<Derived, hidden::VISITOR, Arrays::by_col_>::VisitorOp(A);} \
 template< class Derived> \
 typename hidden::SliceVisitorSelector<Derived, hidden::VISITOR, Arrays::by_row_>::type_result \
 FUNC##ByRow(Derived const& A) \

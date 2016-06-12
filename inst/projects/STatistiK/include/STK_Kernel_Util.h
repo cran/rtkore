@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -53,6 +53,7 @@ enum kernelType
   linear_,
   polynomial_,
   rationalQuadratic_,
+  hamming_,
   unknown_kernel_
 };
 
@@ -60,11 +61,12 @@ enum kernelType
  *  Convert a String to a kernelType. The recognized strings are
  * <table >
  * <tr> <th> Kernel             </th> </tr>
- * <tr> <td> "exponential"   </td></tr>
- * <tr> <td> "gaussian"    </td></tr>
- * <tr> <td> "linear"    </td></tr>
- * <tr> <td> "polynomial"     </td></tr>
- * <tr> <td> "rationalQuadratic"    </td></tr>
+ * <tr> <td> "Exponential"   </td></tr>
+ * <tr> <td> "Gaussian"    </td></tr>
+ * <tr> <td> "Linear"    </td></tr>
+ * <tr> <td> "Polynomial"     </td></tr>
+ * <tr> <td> "RationalQuadratic"    </td></tr>
+ * <tr> <td> "Hamming"    </td></tr>
  * </table>
  *  @param type the String we want to convert
  *  @return the kernrlType represented by the String @c type. If the string
@@ -72,11 +74,12 @@ enum kernelType
  **/
 inline kernelType stringToKernelType( std::string const& type)
 {
-  if (toUpperString(type) == toUpperString(_T("exponential"))) return exponential_;
-  if (toUpperString(type) == toUpperString(_T("gaussian"))) return gaussian_;
-  if (toUpperString(type) == toUpperString(_T("linear"))) return linear_;
-  if (toUpperString(type) == toUpperString(_T("polynomial"))) return polynomial_;
-  if (toUpperString(type) == toUpperString(_T("rationalQuadratic"))) return rationalQuadratic_;
+  if (toUpperString(type) == toUpperString(_T("Exponential"))) return exponential_;
+  if (toUpperString(type) == toUpperString(_T("Gaussian"))) return gaussian_;
+  if (toUpperString(type) == toUpperString(_T("Linear"))) return linear_;
+  if (toUpperString(type) == toUpperString(_T("Polynomial"))) return polynomial_;
+  if (toUpperString(type) == toUpperString(_T("RationalQuadratic"))) return rationalQuadratic_;
+  if (toUpperString(type) == toUpperString(_T("Hamming"))) return hamming_;
   return unknown_kernel_;
 }
 
@@ -87,11 +90,12 @@ inline kernelType stringToKernelType( std::string const& type)
  **/
 inline String kernelTypeToString( kernelType const& type)
 {
-  if (type == exponential_) return String(_T("exponential"));
-  if (type == gaussian_) return String(_T("gaussian"));
-  if (type == linear_) return String(_T("linear"));
-  if (type == polynomial_) return String(_T("polynomial"));
-  if (type == rationalQuadratic_) return String(_T("rationalQuadratic"));
+  if (type == exponential_) return String(_T("Exponential"));
+  if (type == gaussian_) return String(_T("Gaussian"));
+  if (type == linear_) return String(_T("Linear"));
+  if (type == polynomial_) return String(_T("Polynomial"));
+  if (type == rationalQuadratic_) return String(_T("RationalQuadratic"));
+  if (type == hamming_) return String(_T("Hamming"));
   return String(_T("unknown"));
 }
 

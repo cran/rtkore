@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -50,10 +50,11 @@ namespace Kernel
  * \f]
  */
 template<class Array>
-class Linear : public IKernelBase<Array>
+class Linear: public IKernelBase<Array>
 {
   public:
     typedef IKernelBase<Array> Base;
+    typedef typename Array::Row RowVector;
     using Base::p_data_;
     using Base::gram_;
     using Base::symmetrize;
@@ -67,27 +68,23 @@ class Linear : public IKernelBase<Array>
     Linear(Array const& data): Base(data) {}
     /** destructor */
     virtual ~Linear() {}
-    /** compute the kernel */
-    virtual bool run();
+    /** compute the kernel value between two individuals
+     *  @param ind1,ind2 two individuals to compare using the kernel metric */
+    virtual Real kcomp(RowVector const& ind1, RowVector const& ind2) const;
+    /** compute the kernel between an individual and himself
+     *  @param ind the individual to evaluate using the kernel
+     **/
+    virtual Real kdiag(RowVector const& ind) const;
 };
 
 template<class Array>
-bool Linear<Array>::run()
-{
-  typedef typename Array::Row RowVector;
-  gram_.resize(p_data_->sizeRows());
-  gram_.shift(p_data_->beginRows());
-  for (int j= gram_.begin(); j < gram_.end(); ++j)
-  {
-    // create a reference on the current row
-    RowVector row_j(p_data_->row(j), true);
-    for (int i= gram_.begin(); i < j; ++i)
-    { gram_(i,j) = row_j.dot(p_data_->row(i));}
-  }
-  // symmetrize
-  symmetrize();
-  return true;
-}
+Real Linear<Array>::kcomp(RowVector const& ind1, RowVector const& ind2) const
+{ return ind1.dot(ind2);}
+
+template<class Array>
+Real Linear<Array>::kdiag(RowVector const& ind) const
+{ return ind.norm2();}
+
 } // namespace Kernel
 
 } // namespace STK

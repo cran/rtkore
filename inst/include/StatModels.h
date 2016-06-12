@@ -60,13 +60,13 @@
 #ifndef STATMODELS_H
 #define STATMODELS_H
 
+#include <StatModels/include/STK_ModelDiagGaussian_muj_sj.h>
 #include "../projects/StatModels/include/STK_Model_Util.h"
 #include "../projects/StatModels/include/STK_IStatModelBase.h"
 
 #include "../projects/StatModels/include/STK_BernoulliModel.h"
-#include "../projects/StatModels/include/STK_JointBernoulliModel.h"
-#include "../projects/StatModels/include/STK_JointGaussianModel.h"
-#include "../projects/StatModels/include/STK_JointGammaModel.h"
+#include "../projects/StatModels/include/STK_ModelBernoulli_pj.h"
+#include "../projects/StatModels/include/STK_ModelGamma_aj_bj.h"
 
 #include "../projects/StatModels/include/STK_GaussianModel.h"
 

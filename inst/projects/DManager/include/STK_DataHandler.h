@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -66,23 +66,25 @@ struct DataHandlerTraits<DataHandler, Type>
  *  files and to get the columns identified by an idData in an @c Array2D.
  *  All data are stored in memory in a ReadWriteCsv structure.
  */
-class DataHandler : public DataHandlerBase<DataHandler>
+class DataHandler: public DataHandlerBase<DataHandler>
 {
   public:
+    typedef DataHandlerBase<DataHandler> Base;
     typedef DataHandlerBase<DataHandler>::InfoMap InfoMap;
     /** default constructor */
-    inline DataHandler() : DataHandlerBase(), withNames_(false)
+    inline DataHandler() : Base(), withNames_(false)
     { data_.setWithNames(false); descriptor_.setWithNames(false);}
     /** destructor */
     inline ~DataHandler() {}
-    /** @return the number of sample (the number of rows of the data) */
-    inline int nbSampleImpl() const { return data_.sizeRows();}
-    /** @return the number of sample (the number of columns of the data) */
-    inline int nbVariableImpl() const { return data_.size();}
     /** get the whole data set */
     inline ReadWriteCsv const& data() const { return data_;}
     /** get the whole descriptor set */
     inline ReadWriteCsv const& descriptor() const { return descriptor_;}
+    /** @return the number of sample (the number of rows of the data) */
+    inline int nbSample() const { return data_.sizeRows();}
+    /** @return the number of sample (the number of columns of the data) */
+    inline int nbVariable() const { return data_.size();}
+
     /** set withNames flag */
     inline void setWithNames(bool withNames) { withNames_ = withNames;}
     /** read a data file and its companion description file. */

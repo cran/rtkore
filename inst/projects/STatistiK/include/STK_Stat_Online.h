@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -44,6 +44,7 @@ namespace STK
 {
 namespace Stat
 {
+
 template < class Array, class Type> struct Online;
 /** @ingroup StatDesc
  *  @brief Computation online of the statistics of a Real set of variable.
@@ -74,6 +75,11 @@ struct Online<Array, Real>
   /** copy constructor */
   inline Online( Online const& stat): mean_(stat.mean_), variance_(stat.variance_), iter_(stat.iter_)
   {}
+  /** @return the computed online mean */
+  Array const& mean() const { return mean_;}
+  /** @return the computed online variance */
+  Array variance() const
+  { return iter_ == 0 ? STK::Arithmetic<Real>::infinity() : variance_/iter_;}
   /** initialize one dimensional arrays */
   inline void resize(Range const& range)
   { mean_.resize(range) = 0.; variance_.resize(range) = 0.; iter_ =0;}
@@ -84,14 +90,14 @@ struct Online<Array, Real>
   inline void release() { mean_ = 0.; variance_ = 0.; iter_ = 0;}
   /** update the parameters using the current estimated parameters
    *  @see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
-   *  @param mean the current value of the parameter
+   *  @param x the current value
    **/
-  inline void update(Array const& mean)
+  inline void update(Array const& x)
   {
     iter_++;
-    Array delta = mean - mean_;
+    Array delta = x - mean_;
     mean_ += delta/iter_;
-    variance_ = variance_ + delta.prod(mean - mean_);
+    variance_ = variance_ + delta.prod(x - mean_);
   }
   /** overwrite the statistics with other.
    *  @param other the statistics to copy
@@ -122,6 +128,11 @@ struct Online<Real, Real>
   /** copy constructor */
   Online( Online const& stat): mean_(stat.mean_), variance_(stat.variance_), iter_(stat.iter_)
   {}
+  /** @return the computed online mean */
+  Real const& mean() const { return mean_;}
+  /** @return the computed online variance */
+  Real variance() const
+  { return iter_ == 0 ? STK::Arithmetic<Real>::infinity() : variance_/iter_;}
   /** release the computed parameters */
   inline void release() { mean_ = 0.; variance_ = 0.; iter_ = 0;}
   /** update the parameters using the current estimated parameters
@@ -147,7 +158,7 @@ struct Online<Real, Real>
   }
   /** on line mean of the variable */
   Real mean_;
-  /** on line variance of the variable*/
+  /** on line variance times n of the variable*/
   Real variance_;
   /** number of stored values */
   int iter_;

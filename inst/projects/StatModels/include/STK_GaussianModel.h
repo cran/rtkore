@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as
@@ -53,10 +53,9 @@ class GaussianModel : public IGaussianModel<Array>
 {
   public:
     typedef IGaussianModel<Array> Base;
-    using Base::p_data_;
+    using Base::p_dataij_;
     using Base::nbVariable;
     using Base::mean_;
-    using Base::p_law_;
 
     typedef typename Array::Col ColVector;
     typedef typename Array::Row RowVector;
@@ -70,6 +69,8 @@ class GaussianModel : public IGaussianModel<Array>
     GaussianModel( Array const& data);
     /** destructor. */
     ~GaussianModel();
+    /** Accessor to the normal law */
+    MultiLaw::Normal<RowVector>* const& p_law() const { return p_law_;}
     /** implementation of the Gaussian statistical model
      * @return @c true if no error occur and @c false otherwise.
      */
@@ -83,6 +84,7 @@ class GaussianModel : public IGaussianModel<Array>
      * @return the empirical covariance
      */
     inline ArraySquareX const& covariance() const { return cov_;}
+
   protected:
     /** ArrayXX of the empirical covaiance */
     ArraySquareX cov_;
@@ -92,13 +94,16 @@ class GaussianModel : public IGaussianModel<Array>
      * @param weights the weights of the samples
      **/
     void compWeightedCovariance(ColVector const& weights);
+    /** pointer on the normal law */
+    MultiLaw::Normal<RowVector>* p_law_;
 };
 
 /* constructor */
 template <class Array>
-GaussianModel<Array>::GaussianModel( Array const* p_data)
-                            : Base(p_data)
-                            , cov_(p_data_->cols())
+GaussianModel<Array>::GaussianModel( Array const* p_dataij)
+                                  : Base(p_dataij)
+                                  , cov_(p_dataij_->cols())
+                                  , p_law_(0)
 {
   this->setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);
 }
@@ -106,11 +111,10 @@ GaussianModel<Array>::GaussianModel( Array const* p_data)
 /* constructor */
 template <class Array>
 GaussianModel<Array>::GaussianModel( Array const& data)
-                            : Base(data)
-                            , cov_(data.cols())
-{
-  setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);
-}
+                                   : Base(data)
+                                   , cov_(data.cols())
+                                   , p_law_(0)
+{ setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);}
 
 /* destructor */
 template <class Array>
@@ -130,9 +134,9 @@ bool GaussianModel<Array>::run()
   // create p_law_ (will be deleted in base class)
   // update gaussian law (will be deleted in base class)
   if (!p_law_) p_law_ = new MultiLaw::Normal<RowVector>(mean_, cov_);
-  else static_cast<MultiLaw::Normal<RowVector>*>(p_law_)->setParameters(mean_, cov_);
+  else p_law_->setParameters(mean_, cov_);
   // compute log likelihood of the gaussian law
-  this->setLnLikelihood(static_cast<MultiLaw::Normal<RowVector>* >(p_law_)->lnLikelihood(*p_data_ ));
+  this->setLnLikelihood(p_law_->lnLikelihood(*p_dataij_ ));
   // everything ok
   return true;
 }
@@ -151,9 +155,9 @@ bool GaussianModel<Array>::run(ColVector const& weights)
   // create p_law_ (will be deleted in base class)
   // update gaussian law (will be deleted in base class)
   if (!p_law_) p_law_ = new MultiLaw::Normal<RowVector>(mean_, cov_);
-  else static_cast<MultiLaw::Normal<RowVector>*>(p_law_)->setParameters(mean_, cov_);
+  else p_law_->setParameters(mean_, cov_);
   // compute log likelihood of the gaussian law
-  this->setLnLikelihood(static_cast<MultiLaw::Normal<RowVector>* >(p_law_)->lnLikelihood(*p_data_ ));
+  this->setLnLikelihood(p_law_->lnLikelihood(*p_dataij_ ));
   // everything ok
   return true;
 }
@@ -161,13 +165,13 @@ bool GaussianModel<Array>::run(ColVector const& weights)
 /** compute the empirical covariance matrix. */
 template <class Array>
 void GaussianModel<Array>::compCovariance()
-{ Stat::covariance(*p_data_,cov_);}
+{ Stat::covariance(*p_dataij_,cov_);}
 /** compute the empirical weighted covariance matrix.
  * @param weights the weights of the samples
  **/
 template <class Array>
 void GaussianModel<Array>::compWeightedCovariance(ColVector const& weights)
-{ Stat::covariance(*p_data_, weights, cov_);}
+{ Stat::covariance(*p_dataij_, weights, cov_);}
 
 } // namespace STK
 

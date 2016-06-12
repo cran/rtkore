@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as
@@ -37,18 +37,34 @@
 #ifndef STK_IGAUSSIANMODEL_H
 #define STK_IGAUSSIANMODEL_H
 
+#include "STK_Model_Util.h"
 #include "STK_IStatModel.h"
 
-#include "Arrays/include/STK_Array2D.h"
-#include "Arrays/include/STK_Array2DSquare.h"
-#include "Arrays/include/STK_Array2DVector.h"
-#include "Arrays/include/STK_Array2DPoint.h"
+#include <Arrays/include/STK_Array2D.h>
+#include <Arrays/include/STK_Array2DSquare.h>
+#include <Arrays/include/STK_Array2DVector.h>
+#include <Arrays/include/STK_Array2DPoint.h>
 
-#include "STatistiK/include/STK_Stat_Functors.h"
-
+#include <STatistiK/include/STK_Stat_Functors.h>
 
 namespace STK
 {
+template<class> class IGaussianModel;
+
+namespace hidden
+{
+
+template<class Data_>
+struct ModelTraits< IGaussianModel<Data_> >
+{
+  class Void {};
+  typedef Data_ Array;
+  typedef Data_ Data;
+  typedef Void ParamHandler;
+};
+
+} // namespace hidden
+
 /** Compute the gaussian log likehood of a one dimensionnal gaussian model.
  * @param data the data set
  * @param mu, sigma the mean and varaince of the gaussian law
@@ -133,9 +149,9 @@ Real gaussianLnLikelihood(ExprBase<Vector> const& data, Real const& mu, Real con
  *  to impose various constraint on the covariance matrix.
  **/
 template <class Array>
-class IGaussianModel : public IStatModel<Array>
+class IGaussianModel: public IStatModel< IGaussianModel<Array> >
 {
-  typedef IStatModel<Array> Base;
+  typedef IStatModel< IGaussianModel<Array> > Base;
   typedef typename Array::Row RowVector;
   typedef typename Array::Col ColVector;
 
@@ -148,6 +164,7 @@ class IGaussianModel : public IStatModel<Array>
      * @param data reference on the data set
      **/
     IGaussianModel( Array const& data) : Base(data) {}
+
   public:
     /** destructor. */
     virtual ~IGaussianModel() {}
@@ -158,7 +175,7 @@ class IGaussianModel : public IStatModel<Array>
     /** Vector of the empirical means */
     RowVector mean_;
     /** compute the empirical mean */
-    inline void compMean() { mean_ = Stat::mean(*this->p_data_);}
+    inline void compMean() { mean_ = Stat::mean(*(this->p_dataij_));}
     /** compute the empirical weighted mean
      *  @param weights the weights of the samples
      **/

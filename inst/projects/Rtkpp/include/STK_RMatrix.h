@@ -36,13 +36,13 @@
 #ifndef STK_RMATRIX_H
 #define STK_RMATRIX_H
 
-#include "../../Arrays/include/STK_ExprBaseVisitor.h"
-#include "../../Arrays/include/STK_ExprBaseDot.h"
-#include "../../Arrays/include/STK_ExprBaseProduct.h"
+#include <Arrays/include/STK_ExprBaseVisitor.h>
+#include <Arrays/include/STK_ExprBaseDot.h>
+#include <Arrays/include/STK_ExprBaseProduct.h>
 
-#include "../../Arrays/include/STK_ArrayBaseApplier.h"
-#include "../../Arrays/include/STK_ArrayBaseAssign.h"
-#include "../../Arrays/include/STK_ArrayBaseInitializer.h"
+#include <Arrays/include/STK_ArrayBaseApplier.h>
+#include <Arrays/include/STK_ArrayBaseAssign.h>
+#include <Arrays/include/STK_ArrayBaseInitializer.h>
 
 
 namespace STK
@@ -68,6 +68,7 @@ struct Traits< RMatrix<Type_> >
     typedef ColOperator< RMatrix<Type_> > SubCol;
     typedef Void SubVector;
     typedef Void SubArray;
+    typedef Void Number;
 
     typedef Type_ Type;
     typedef Type const& ReturnType;

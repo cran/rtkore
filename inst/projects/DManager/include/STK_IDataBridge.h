@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015 Serge Iovleff
+/*     Copyright (C) 2004-2016 Serge Iovleff
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -45,17 +45,18 @@ namespace STK
  *  Every data set wrapped by the end-user has to furnish an Id.
  *  Derived class has to implement the pure virtual method
  *  @code
- *  int findMissing();
+ *    int findMissing();
  *  @endcode
  *  which fill the vector v_missing_ and return the number of missing values.
  **/
 class IDataBridge
 {
   public:
+    typedef std::vector<std::pair<int,int> > MissingIndexes;
     /** default constructor. User must provide with the data set an Id */
     IDataBridge(std::string const& idData);
     /** copy constructor (Warning: will copy the data set)
-     *  @param manager the MixtureData to copy
+     *  @param manager the DataBridge to copy
      **/
     IDataBridge( IDataBridge const& manager);
     /** destructor */
@@ -63,18 +64,15 @@ class IDataBridge
     /** return the Id of the mixture */
     inline std::string const& idData() const { return idData_;}
     /** getter. @return the coordinates of the missing values in the data set */
-    inline std::vector<std::pair<int,int> > const& v_missing() const { return v_missing_;}
-
-    /** function to use in order to initialize v_missing_ and the data set. */
-    inline void initialize() { findMissing(); }
+    inline MissingIndexes const& v_missing() const { return v_missing_;}
 
   protected:
     /** vector with the coordinates of the missing values */
-    std::vector< std::pair<int,int> > v_missing_;
+    MissingIndexes v_missing_;
     /** utility function for lookup the data set and find missing values
      *  coordinates.
      *  @return the number of missing values */
-   virtual size_t findMissing() =0;
+    virtual size_t findMissing() =0;
 
   private:
     /** Id data of the mixture */

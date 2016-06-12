@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as
@@ -67,7 +67,7 @@ class UniformDiscrete : public IUnivLaw<int>
      **/
     inline UniformDiscrete( int a, int b): Base(_T("UniformDiscrete")), a_(a), b_(b), n_(b_ - a_ + 1)
     {
-      if (n_ <= 0.)
+      if (n_ < 0.)
       { STKINVALIDARGUMENT_ERROR_2ARG(UniformDiscrete::UniformDiscrete, a_, b_,invalid parameters);}
     }
     /** copy constructor.
@@ -151,7 +151,7 @@ class UniformDiscrete : public IUnivLaw<int>
 
 /* Generate a pseudo UniformDiscrete random variate. */
 inline int UniformDiscrete::rand() const
-{ return a_ + int(generator.rand(double(b_ - a_)));}
+{ return a_ + int(generator.rand(double(n_)));}
 /* Give the value of the pdf at x.
  *  @param x a real value
  **/
@@ -172,7 +172,7 @@ inline Real UniformDiscrete::lpdf( int const& x) const
 }
 /* The cumulative distribution function is
  * \f[
- *  F(t; a,b)= \frac{t - a}{b-a}
+ *  F(t; a,b)= \frac{t - a}{b-a+1}
  * \f]
  *  @param t a real value
  **/
@@ -207,7 +207,7 @@ inline int UniformDiscrete::icdf( Real const& p) const
  *  @param scale the scale of the distribution
  **/
 inline int UniformDiscrete::rand( int a, int b)
-{ return a + int(generator.rand(double(b - a)));}
+{ return a + int(generator.rand(double(b - a +1)));}
 
 /* Give the value of the pdf at x.
  *  @param x a real value
@@ -217,7 +217,7 @@ inline Real UniformDiscrete::pdf( Real const& x, int a, int b)
 {
   if (!Arithmetic<Real>::isFinite(x) ) return x;
   if ((x < a)||(x > b)) return 0.;
-  return 1./(b-a);
+  return 1./Real(b-a+1);
 }
 
 /* Give the value of the log-pdf at x.
@@ -228,11 +228,11 @@ inline Real UniformDiscrete::lpdf( Real const& x, int a, int b)
 {
   if (!Arithmetic<Real>::isFinite(x) ) return x;
   if ((x < a)||(x > b)) return -Arithmetic<Real>::infinity();
-  return -std::log(b-a);
+  return -std::log(b-a+1);
 }
 
 inline Real UniformDiscrete::cdf(const Real& t, int a, int b)
-{ return (b - t)/(b-a);}
+{ return (b - t)/(b-a+1);}
 
 
 inline int UniformDiscrete::icdf(const Real& p, int a, int b)

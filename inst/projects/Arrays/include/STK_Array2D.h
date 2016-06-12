@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -40,6 +40,7 @@ namespace STK
 {
 // forward declaration
 template< typename Type> class Array2D;
+template< typename Type> class Array2DNumber;
 template< typename Type> class Array2DPoint;
 template< typename Type> class Array2DVector;
 
@@ -63,6 +64,7 @@ struct Traits< Array2D<Type_> >
   private:
     class Void {};
   public:
+    typedef Array2DNumber<Type_> Number;
     typedef Array2DPoint<Type_>  Row;
     typedef Array2DVector<Type_> Col;
     typedef Array2DPoint<Type_>  SubRow;

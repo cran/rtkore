@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -90,15 +90,18 @@ namespace STK
 template<class Derived>
 class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_>
 {
-  protected:
-    /** Default constructor */
-    ExprBase() : Base() {}
-    /** destructor */
-    ~ExprBase() {}
-
   public:
     typedef ITContainer<Derived> Base;
     typedef typename hidden::Traits<Derived>::Type Type;
+    typedef typename hidden::Traits<Derived>::ReturnType ReturnType;
+
+//    typedef typename hidden::Traits<Derived>::Row Row;
+//    typedef typename hidden::Traits<Derived>::Col Col;
+// To add to the operators
+//    typedef typename hidden::Traits<Derived>::SubRow SubRow;
+//    typedef typename hidden::Traits<Derived>::SubCol SubCol;
+//    typedef typename hidden::Traits<Derived>::SubVector SubVector;
+//    typedef typename hidden::Traits<Derived>::SubArray SubArray;
 
     enum
     {
@@ -108,6 +111,17 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
       sizeCols_  = hidden::Traits<Derived>::sizeCols_,
       storage_   = hidden::Traits<Derived>::storage_
     };
+
+    /** constant iterator class for compatibility with the stl */
+    class const_iterator;
+
+  protected:
+    /** Default constructor */
+    inline ExprBase(): Base() {}
+    /** destructor */
+    inline ~ExprBase() {}
+
+  public:
     //--------------
     // Start Visitors
     /** @brief Visit the container using a constant visitor

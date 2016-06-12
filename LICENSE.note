@@ -9,5 +9,5 @@ stkpp is publicly available under the LGPL license (see www.gnu.org/copyleft/lgp
 rtkore (the stkpp core integration into R) is publicly available under the GPL
 license version 2 or higher (see www.gnu.org/copyleft/gpl.html)
 
-Some parts of the Rcpp package have been adapted for the rtkpp package. 
+Some parts of the Rcpp package are adapted or used by the rtkore package. 
 Rcpp is publicly available under the GPL license version 2 or higher.

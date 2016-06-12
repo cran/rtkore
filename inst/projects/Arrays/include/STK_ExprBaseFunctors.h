@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as
@@ -122,7 +122,7 @@ template<typename Derived, typename Funct>
 struct ApplyFunctorByCol
 {
   typedef typename Derived::Type Type;
-  typedef Array2DPoint<Type> resultByColType;
+  typedef CArrayPoint<Type> resultByColType;
 
   /** constructor */
   inline ApplyFunctorByCol( ExprBase<Derived> const& lhs) : lhs_(lhs.asDerived()) {}
@@ -165,7 +165,7 @@ template<typename Derived, typename Funct>
 struct ApplyWeightedFunctorByCol
 {
   typedef typename Derived::Type Type;
-  typedef Array2DPoint<Type> resultByColType;
+  typedef CArrayPoint<Type> resultByColType;
 
   /** constructor */
   inline ApplyWeightedFunctorByCol( ExprBase<Derived> const& lhs): lhs_(lhs.asDerived()) {}
@@ -215,7 +215,7 @@ template<typename Derived, typename Funct>
 struct ApplyFunctorByRow
 {
   typedef typename Derived::Type Type;
-  typedef Array2DVector<Type> resultByRowType;
+  typedef CArrayVector<Type> resultByRowType;
 
   /** constructor */
   inline ApplyFunctorByRow( ExprBase<Derived> const& lhs) : lhs_(lhs.asDerived()) {}
@@ -254,7 +254,7 @@ template<typename Derived, typename Funct>
 struct ApplyWeightedFunctorByRow
 {
   typedef typename Derived::Type Type;
-  typedef Array2DVector<Type> resultByRowType;
+  typedef CArrayVector<Type> resultByRowType;
 
   /** constructor */
   inline ApplyWeightedFunctorByRow( ExprBase<Derived> const& lhs) : lhs_(lhs.asDerived()) {}

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -27,7 +27,6 @@
  * created on: 22 juil. 2011
  * Purpose: define the class IStatModel.
  * Author:   iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
- *
  **/
 
 /** @file STK_IStatModel.h
@@ -40,8 +39,9 @@
 #include <cmath>
 
 #include "STK_IStatModelBase.h"
-#include "Sdk/include/STK_Macros.h"
-#include "STatistiK/include/STK_MultiLaw_IMultiLaw.h"
+#include "STK_Model_Util.h"
+#include <Sdk/include/STK_Macros.h>
+#include <STatistiK/include/STK_MultiLaw_IMultiLaw.h>
 
 namespace STK
 {
@@ -75,81 +75,59 @@ namespace STK
  *  - A probability (density/law) which for each row of the data set can compute
  *  a density/probability.
  *
- *  The parameters of the distribution (if any) are directly managed by the
- *  probability law.
- *
  *  @tparam Data can be any kind of container for the data set. it should at
  *  least derive from ITContainer, @sa ITContainer, and provide an access to
  *  a single row like the CArray class or the Array2D class.
  **/
-template <class Data>
+template <class Derived>
 class IStatModel : public IStatModelBase
 {
   public:
+    typedef typename hidden::ModelTraits<Derived>::Data Data;
+    typedef typename hidden::ModelTraits<Derived>::ParamHandler ParamHandler;
+
     /** Type of the data contained in the container */
     typedef typename Data::Type Type;
     /** Type of the row of the data container (a sample) */
     typedef typename Data::Row Row;
-    /** Type of the law : depend of the sample type */
-    typedef MultiLaw::IMultiLaw<Row> MultivariateLaw;
 
   protected:
     /** Constructor with data set. */
-    IStatModel(Data const& data) : IStatModelBase(data.sizeRows(), data.sizeCols())
-                                       , p_data_(&data)
-                                       , p_law_(0)
+    IStatModel(Data const& data): IStatModelBase(data.sizeRows(), data.sizeCols())
+                                , p_dataij_(&data)
     {}
     /** Constructor with a ptr on the data set. */
-    IStatModel(Data const* p_data) : IStatModelBase(), p_data_(p_data), p_law_(0)
+    IStatModel(Data const* p_data) : IStatModelBase(), p_dataij_(p_data)
     { if (p_data) this->initialize(p_data->sizeRows(), p_data->sizeCols()) ;}
 
   public:
     /** destructor */
     ~IStatModel() {}
-    /** @return the total available observations */
-    inline MultivariateLaw const* p_law() const { return p_law_;}
-    /** Set the probability law of the model.
-     *  @param p_law the probability law of the model
-     **/
-    inline void setLaw( MultivariateLaw* p_law) { p_law_ = p_law;}
+    /** @return the pointer on the main data set */
+    inline Data const* const p_dataij() const { return p_dataij_;}
     /** Set the data set of the model.
      *  @param data the data set of the model
      **/
     inline void setData( Data const& data)
-    { p_data_ = &data;
-      this->setNbSample(p_data_->sizeRows());
-      this->setNbVariable(p_data_->sizeCols()) ;
+    { p_dataij_ = &data;
+      this->setNbSample(p_dataij_->sizeRows());
+      this->setNbVariable(p_dataij_->sizeCols()) ;
     }
     /** Set the data set of the model.
      *  @param p_data the data set of the model
      **/
     inline void setData( Data const* p_data)
-    { p_data_ = p_data;
-      if (p_data_)
+    { p_dataij_ = p_data;
+      if (p_dataij_)
       {
-        this->setNbSample(p_data_->sizeRows());
-        this->setNbVariable(p_data_->sizeCols()) ;
+        this->setNbSample(p_dataij_->sizeRows());
+        this->setNbVariable(p_dataij_->sizeCols()) ;
       }
     }
 
   protected:
     /** A pointer on the original data set */
-    Data const* p_data_;
-    /** a pointer on the probability law. */
-    MultivariateLaw* p_law_;
-    /** compute the log Likelihood of the statistical model. */
-    void compLnLikelihood()
-    {
-      // no data
-      if (!this->p_data_) return;
-      // check there exists a law
-      if (!p_law_)
-        STKRUNTIME_ERROR_NO_ARG(IStatModel::compLnLikelihood,p_law_ is not initialized);
-      Real sum = 0.0;
-      for (int i= p_data_->beginRows(); i<= p_data_->lastIdxRows(); i++)
-      { sum += p_law_->lpdf(p_data_->row(i));}
-      setLnLikelihood(sum);
-    }
+    Data const* p_dataij_;
 };
 
 } // namespace STK

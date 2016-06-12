@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -126,7 +126,7 @@ inline bool IDataHandler::addInfo(std::string const& idData, std::string const& 
   {
      if (ret.first->second != idModel)
      {
-#ifdef STK_MIXTURE_DEBUG
+#ifdef STK_DMANAGER_DEBUG
        stk_cerr << _T("In IDataHandler::addInfo, There exists an idData with a different idModel.\n");
 #endif
        return false;

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -45,13 +45,45 @@ namespace STK
 
 namespace hidden
 {
-/** Policy trait class for (Stat) Model classes */
-template<class Derived> struct ModelTrait;
-
-} // namespace hidden
+template<class Data> struct ModelTraits;
+} // hidden
 
 namespace Model
 {
+
+/** @ingroup StatModels
+ *  list of the statistical models that can be used
+ **/
+enum StatisticalModels
+{
+  ModelBernoulli_pj_,
+  ModelDiagGaussian_muj_sj_,
+  ModelGamma_aj_bj_,
+  MixtureGamma_ajk_bjk_,
+  MixtureGamma_ajk_bk_,
+  MixtureGamma_ajk_bj_,
+  MixtureGamma_ajk_b_,
+  MixtureGamma_ak_bjk_,
+  MixtureGamma_ak_bk_,
+  MixtureGamma_ak_bj_,
+  MixtureGamma_ak_b_,
+  MixtureGamma_aj_bjk_,
+  MixtureGamma_aj_bk_,
+  MixtureGamma_a_bjk_,
+  MixtureGamma_a_bk_,
+  MixtureGaussian_sjk_,
+  MixtureGaussian_sk_,
+  MixtureGaussian_sj_,
+  MixtureGaussian_s_,
+  MixtureCategorical_pjk_,
+  MixtureCategorical_pk_,
+  MixturePoisson_ljk_,
+  MixturePoisson_lk_,
+  MixturePoisson_ljlk_,
+  MixtureKernelGaussian_sk_,
+  MixtureKernelGaussian_s_,
+  unknown_model_
+};
 
 /** @ingroup StatModels
  *  @brief Model selection criteria

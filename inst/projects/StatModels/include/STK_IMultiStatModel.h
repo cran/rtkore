@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff, Université Lille 1, Inria
+/*     Copyright (C) 2004-2016  Serge Iovleff, Université Lille 1, Inria
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -40,15 +40,27 @@
 #include <cmath>
 
 #include "STK_IStatModelBase.h"
-#include "STK_IMultiParameters.h"
 
 #include <Sdk/include/STK_IRunner.h>
 #include <Sdk/include/STK_Macros.h>
+#include <DManager/include/STK_DataBridge.h>
 #include <STatistiK/include/STK_MultiLaw_IMultiLaw.h>
 
 
 namespace STK
 {
+
+namespace hidden
+{
+/** Policy trait class for (Stat) Model classes */
+template<class Derived> struct StatModelTraits;
+
+} // namespace hidden
+
+/** Parameters container class. All statistical models implemented has an Id defined
+ *  in STK::Model::StatisticalModels enumeration.
+ **/
+template <int Id> struct ModelParameters;
 
 /** @ingroup StatModels
  *  @brief Interface base class for all Multivariate Statistical Models.
@@ -76,107 +88,103 @@ namespace STK
  *  the help of two elements
  *  - A data set where the number of samples is the number of rows and the number
  *  of variable is the number of columns. This data set is stored in a Container
- *  of type @c Array.
+ *  of type @c Data.
  *  - A set of parameters stored in a class of type @c Parameters. These parameters
  *  can be created using the @c createParameters method with the effect to
  *  call the default constructor of the Parameters class, or can be set to this
  *  class using the method @c setParameters.
  *
- *  Derived implementations of this interface have to implement the following
- *  pure virtual methods:
+ *  The design for this class is the Curious Recursive Pattern. Derived
+ *  implementations of this interface have to implement the following
+ *  psudo virtual methods:
  *  @code
- *    virtual int computeNbFreeParameters() const =0;
- *    virtual Real computeLnLikelihood( RowVector const& rowData) const = 0;
- *    virtual void computeParameters() = 0;
- *    virtual void computeParameters(ColVector const& weights) = 0;
+ *    int computeNbFreeParameters() const;
+ *    Real computeLnLikelihood( RowVector const& rowData) const;
+ *    void computeParameters();
+ *    void computeParameters(ColVector const& weights);
+ *    void writeParameters(ostream& os);
  *  @endcode
  *
- *  @tparam Array can be any kind of vector for the data set. it should at
- *  least derive from the specialization of ITContainer for Arrays::vector_,
- *  @sa ITContainer.
- *  @tparam Parameters any structure encapsulating the parameters of the model.
+ *  @tparam Dervived any kind of multidimensionnal model.
  *
- *  @note This class is a runner, The parameters are estimated using either
- *  @c run() or @c run(weights) methods. This class can also be used
- *  as a "kitchen" providing tools, in particular if there is latent variables
- *  and one need to use an iterative algorithm.
- *  @sa IMixtureModel.
+ *  @sa IMixtureDensity.
  **/
-template <class Array, class WColVector, class Parameters>
-class IMultiStatModel : public IStatModelBase, public IRunnerUnsupervised<Array, WColVector>
+template <class Derived>
+class IMultiStatModel: public IStatModelBase, public IRecursiveTemplate<Derived>
 {
   public:
+    /** Type of the container with the data */
+    typedef typename hidden::StatModelTraits<Derived>::Data Data;
+    /** Type of the data in the container */
+    typedef typename hidden::StatModelTraits<Derived>::Type Type;
     /** Type of the row vector of the container */
-    typedef typename Array::Row RowVector;
+    typedef typename hidden::StatModelTraits<Derived>::RowVector RowVector;
     /** Type of the column vector of the container */
-    typedef typename Array::Col ColVector;
-    /** Type of the runner */
-    typedef IRunnerUnsupervised<Array, WColVector> Runner;
-    using Runner::p_data;
+    typedef typename hidden::StatModelTraits<Derived>::ColVector ColVector;
+    /** Type of the vector with the weights */
+    typedef typename hidden::StatModelTraits<Derived>::WColVector WColVector;
+    /** Type of the parameters of the Model */
+    typedef typename hidden::StatModelTraits<Derived>::Parameters Parameters;
 
   protected:
     /** default constructor. */
-    IMultiStatModel() : IStatModelBase(), Runner()
-                      , p_param_(0), isParametersCreated_(false) {}
+    IMultiStatModel(): IStatModelBase(), p_data_(0), param_() {}
     /** Constructor with data set. */
-    IMultiStatModel( Array const& data)
-                   : IStatModelBase(), Runner(data)
-                   , p_param_(0) , isParametersCreated_(false)
+    IMultiStatModel( Data const& data): IStatModelBase(), p_data_(&data), param_(data.cols())
     { this->initialize(data.sizeRows(), data.sizeCols());}
     /** Constructor with a ptr on the data set. */
-    IMultiStatModel( Array const* p_data)
-                   : IStatModelBase(), Runner(p_data)
-                   , p_param_(0), isParametersCreated_(false)
+    IMultiStatModel( Data const* p_data): IStatModelBase(), p_data_(p_data), param_()
     {
       if (p_data)
+      {
         this->initialize(p_data->sizeRows(), p_data->sizeCols());
+        param_.resize(p_data_->cols());
+      }
     }
     /** Copy constructor.
      *  @param model the model to copy
      **/
     IMultiStatModel( IMultiStatModel const& model)
-                   : IStatModelBase(model), Runner(model)
-                   , p_param_( (model.isParametersCreated_ && model.p_param_)
-                               ? model.p_param_->clone() : model.p_param_)
-                   , isParametersCreated_(model.isParametersCreated_)
+                   : IStatModelBase(model)
+                   , p_data_(model.p_data_)
+                   , param_(param_)
     {}
     /** destructor */
-    ~IMultiStatModel()
-    { if (isParametersCreated_ && p_param_) delete p_param_->asPtrDerived();}
+    ~IMultiStatModel() {}
 
   public:
     /** @return the pointer on the parameters */
-    inline Parameters* const p_param() const
-    { return (p_param_) ? p_param_->asPtrDerived() : 0;}
-    /** compute the log Likelihood of the statistical model. */
-    Real computeLnLikelihood() const
+    inline Data const* const p_data() const { return (p_data_);}
+    /** @return a reference on the parameters */
+    inline Parameters const& param() const { return (param_);}
+    /** @return the last error message */
+    inline String const& error() const { return msg_error_;}
+    /** Set the data set. If the state of the derived runner change when a new
+     *  data set is set the user have to overload the udpate() method.
+     *  @param p_data A pointer on the data set to run
+     **/
+    inline void setData( Data const* p_data)
     {
-      Real sum = 0.0;
-      for (int i= p_data()->beginRows(); i<= p_data()->lastIdxRows(); i++)
-      { sum += computeLnLikelihood(p_data()->row(i));}
-      return(sum);
+      p_data_ = p_data;
+      update();
     }
     /** Estimate the parameters of the model and update the model */
-    virtual bool run()
+    bool run()
     {
 #ifdef STK_DEBUG
       if (!p_data())
       { this->msg_error_ = STKERROR_NO_ARG(IMultiStatModel::run,data have not be set);
         return false;
       }
-      if (!p_param())
-      { this->msg_error_ = STKERROR_NO_ARG(IMultiStatModel::run(weights),parameters have not be set);
-        return false;
-      }
 #endif
       try
       {
         // compute parameters
-        computeParameters();
+        this->asDerived().computeParameters();
         // compute log-likelihood
         this->setLnLikelihood(computeLnLikelihood());
         // set the number of free parameters
-        this->setNbFreeParameter(computeNbFreeParameters());
+        this->setNbFreeParameter(this->asDerived().computeNbFreeParameters());
       }
       catch (Exception const& e)
       { this->msg_error_ = e.error(); return false;}
@@ -186,76 +194,66 @@ class IMultiStatModel : public IStatModelBase, public IRunnerUnsupervised<Array,
      *  variables. The NA values are discarded.
      *  @param weights the weights of the observations
      **/
-    virtual bool run(WColVector const& weights)
+    bool run(WColVector const& weights)
     {
 #ifdef STK_DEBUG
       if (!p_data())
       { this->msg_error_ = STKERROR_NO_ARG(IMultiStatModel::run(weights),data have not be set);
         return false;
       }
-      if (!p_param())
-      { this->msg_error_ = STKERROR_NO_ARG(IMultiStatModel::run(weights),no parameters);
-        return false;
-      }
 #endif
       try
       {
         // compute weighted parameters
-        computeParameters(weights);
+        this->asDerived().computeParameters(weights);
         // compute log-likelihood
         this->setLnLikelihood(computeLnLikelihood());
         // set the number of free parameters
-        this->setNbFreeParameter(computeNbFreeParameters());
+        this->setNbFreeParameter(this->asDerived().computeNbFreeParameters());
       }
       catch (Exception const& e)
       { this->msg_error_ = e.error(); return false;}
       return true;
     }
-    /** compute the number of free parameters */
-    virtual int computeNbFreeParameters() const =0;
-    /** compute the log Likelihood of an observation. */
-    virtual Real computeLnLikelihood( RowVector const& rowData) const = 0;
-    /** @param p_param the pointer on the parameters to set */
-    inline void setParameters(Parameters* p_param)
-    { if (isParametersCreated_ && p_param_) delete p_param_->asPtrDerived();
-      p_param_ = p_param;
-      isParametersCreated_ = false;
-    }
-    /** crete the parameters of the model using default constructor of Parameters */
-    void createParameters()
+    /** @param os the output stream for the parameters */
+    void writeParameters(ostream &os) { this->asDerived().writeParametersImpl(os);}
+    /** default implementation of the writeParameters method.
+     *  @param os the output stream for the parameters */
+    void writeParametersImpl(ostream &os) // default implementation
     {
-      if (isParametersCreated_ && p_param_) delete p_param_->asPtrDerived();
-      p_param_ = new Parameters; isParametersCreated_ = true;
-      if (p_data()) { p_param_->resize(p_data()->cols());}
-    }
-    /** write the parameters.
-     *  @param os the output stream for the parameters
-     **/
-     virtual void writeParameters(ostream &os)
-     {
-       if (!p_param())
-       { STKRUNTIME_ERROR_NO_ARG(IMultiStatModel::writeParameters(os),no parameters);}
 #ifdef STK_DEBUG
-       stk_cout << _T("You should implement this method in your derived class\n");
+        stk_cout << _T("You should implement this method in your derived class\n");
 #endif
-     }
+    }
 
   protected:
     /** Pointer on the parameters of the model. */
-    IMultiParameters<Parameters>* p_param_;
+    Data const* p_data_;
     /** Pointer on the parameters of the model. */
-    bool isParametersCreated_;
-    /** update the model if a new data set is set */
-    virtual void update()
-    { this->initialize(p_data()->sizeRows(), p_data()->sizeCols());
-      if (isParametersCreated_ && p_param_) { p_param_->resize(p_data()->cols());}
+    Parameters param_;
+    /** String with the last error message. */
+    String msg_error_;
+    /** @return the reference on the parameters */
+    inline Parameters& param() { return (param_);}
+    /** compute the log Likelihood of the statistical model. */
+    Real computeLnLikelihood() const
+    {
+      Real sum = 0.0;
+      for (int i= p_data()->beginRows(); i< p_data()->endRows(); i++)
+      { sum += this->asDerived().computeLnLikelihood(p_data()->row(i));}
+      return(sum);
     }
-
-  private:
-    /** compute the parameters */
-    virtual void computeParameters() = 0;
-    /** compute the weighted parameters */
-    virtual void computeParameters(WColVector const& weights) = 0;
+    /** update the model if a new data set is set */
+    void update()
+    {
+      if (p_data_)
+      {
+        this->initialize(p_data()->sizeRows(), p_data()->sizeCols());
+        param_.resize(p_data()->cols());
+      }
+      else
+      { this->initialize(0,0); }
+    }
 };
 
 } // namespace STK

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*     Copyright (C) 2004-2015  Serge Iovleff
+/*     Copyright (C) 2004-2016  Serge Iovleff
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -44,12 +44,13 @@ namespace STK
 /** @ingroup StatModels
  *  @brief Interface base class for all Statistical Models.
  *  This Interface can be used for any kind of data set.
- *  However, it is not allowed to instantiate directly
- *  this class. For a concrete class, use a derived class of the IStatModel
- *  class @sa IStatModel.
+ *  However, it is not allowed to instantiate directly this class.
+ *  For a concrete class, use a derived class of the IStatMode class.
+ *  @sa IStatModel.
+ *
  *  When using a model selection criterion like AIC or BIC, this class is
  *  self-sufficient.
- *   @sa AICCriterion, BICCriterion, IStatModel, IMixtureComposer.
+ *  @sa AICCriterion, BICCriterion, IStatModel, IMixtureComposer.
  **/
 class IStatModelBase
 {
@@ -104,20 +105,23 @@ class IStatModelBase
     /** set the number of free parameters of the model
      *  @param nbFreeParameter number of free parameters of the model
      * */
-    inline void setNbFreeParameter( int nbFreeParameter)
+    inline void setNbFreeParameter( int const& nbFreeParameter)
     { nbFreeParameter_ = nbFreeParameter;}
     /** set the number of samples of the model
      *  @param nbSample number of samples of the model
      * */
-    inline void setNbSample( int nbSample) { nbSample_ = nbSample;}
+    inline void setNbSample( int const& nbSample)
+    { nbSample_ = nbSample;}
     /** set the number of variables of the model
      *  @param nbVariable number of variables of the model
      * */
-    inline void setNbVariable( int nbVariable) { nbVariable_ = nbVariable;}
+    inline void setNbVariable( int const& nbVariable)
+    { nbVariable_ = nbVariable;}
     /** set the log-likelihood of the model
      *  @param lnLikelihood the log-likelihood of the model
      * */
-    inline void setLnLikelihood( Real lnLikelihood) { lnLikelihood_ = lnLikelihood;}
+    inline void setLnLikelihood( Real const& lnLikelihood)
+    { lnLikelihood_ = lnLikelihood;}
     /** set the dimensions of the parameters of the model
      *  @param nbSample number of samples of the model
      *  @param nbVariable number of variables of the model
