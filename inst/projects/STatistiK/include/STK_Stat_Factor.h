@@ -24,7 +24,7 @@
 
 /*
  * Project:  stkpp::STatistiK
- * Purpose:  Compute elementary 1D statistics for all variables.
+ * Purpose:  Compute factors of a set of variables.
  * Author:   Serge Iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
  **/
 
@@ -36,17 +36,20 @@
 #define STK_STAT_FACTOR_H
 
 #include <Sdk/include/STK_IRunner.h>
+#include <Sdk/include/STK_Macros.h>
 
 namespace STK
 {
+
+
 namespace Stat
 {
 /** @ingroup StatDesc
- *  @brief Computation of the Factors of a 2D Container.
+ *  @brief Computation of the Factors of a 1D Container.
  *
- *  The class @c Factor is a factory class for computing the factors of an array.
+ *  The class @c Factor is a factory class for computing the factors of a vector.
  *  The values can be of any type. the Coding is performed from the previous type
- *  in integer. The mapping is stored and preserved in an array of map array.
+ *  in integer. The mapping is stored and preserved in a map array.
  **/
 template <class Array>
 class Factor: public IRunnerWithData<Array>
@@ -57,66 +60,103 @@ class Factor: public IRunnerWithData<Array>
     typedef typename Array::Col ColVector;
     typedef typename Array::Type Type;
 
-    typedef std::map<Type, int> EncodeMap;
-    typedef CArrayPoint<EncodeMap> Encoder;
+    typedef std::map<Type, int> EncodingMap;
+    typedef std::map<int, Type> DecodingMap;
+
     using Base::p_data_;
 
     /** Default Constructor. */
-    Factor(): Base(), levels_(), nbLevels_(), coding_()
-    {}
+    Factor();
     /** Constructor.
      *  @param data a reference on the data set
      **/
-    Factor( Array const& data): Base(data)
-                              , levels_(p_data_->rows(),p_data_->cols())
-                              , nbLevels_(p_data_->cols(), baseIdx - 1)
-                              , coding_(p_data_->cols())
-
-    {}
+    Factor( Array const& data);
     /** Constructor.
      *  @param p_data a pointer on the data set
      **/
-    Factor( Array const* p_data): Base(p_data), levels_(), nbLevels_(), coding_()
-    {
-      if (p_data_)
-      {
-        levels_.resize(p_data_->rows(),p_data_->cols());
-        nbLevels_.resize(p_data_->cols()).setValue(baseIdx - 1);
-        coding_.resize(p_data_->cols());
-      }
-    }
+    Factor( Array const* p_data);
     /** copy constructor.
      *  @param f the Factor to copy
      **/
-    Factor( Factor const& f): Base(f), levels_(f.levels_), nbLevels_(f.nbLevels_)
-                            , coding_(f.coding_)
-    {}
+    Factor( Factor const& f);
     /** virtual destructor.*/
-    virtual ~Factor() {}
-
-    /** @return the array of factor levels */
-    inline CArrayXXi const& levels() const { return levels_;}
-    /** @return the array of number of levels */
-    inline CPointXi const& nbLevels() const { return nbLevels_;}
-    /** @return the array of encoding map */
-    inline Encoder const& coding() const { return coding_;}
+    inline virtual ~Factor() {}
 
     /** clone pattern */
     inline virtual Factor* clone() const { return new Factor(*this);}
+
+    /** @return array with the factors encoded as integers */
+    inline CVectorXi const& asInteger() const { return asInteger_;}
+    /** @return array with for each variables the levels */
+    inline Array2DVector<Type> const& levels() const {return levels_;}
+    /** @return array with for each variables the counts of the levels */
+    inline VectorXi const& counts() const {return counts_;}
+    /** @return array with for each variables the number of levels */
+    inline int const& nbLevels() const { return nbLevels_;}
+    /** @return array with the encoding maps factor to int */
+    inline EncodingMap const& encoder() const { return encoder_;}
+    /** @return array with the encoding maps factor to int */
+    inline DecodingMap const& decoder() const { return decoder_;}
+
     /** run the estimation of the Factor statistics. **/
     virtual bool run();
 
   protected:
-    /** array of levels */
-    CArrayXXi levels_;
+    /** Array of the data size with the levels of each variables in an integer format*/
+    CVectorXi asInteger_;
     /** Number of levels of each variables */
-    CPointXi nbLevels_;
-    /** coding of the original variables */
-    Encoder coding_;
+    int nbLevels_;
+    /** Array with the levels of each variables */
+    Array2DVector<Type> levels_;
+    /** Array with the counts of each factor */
+    VectorXi counts_;
+    /** encoder of the levels */
+    EncodingMap encoder_;
+    /** decoder of the levels */
+    DecodingMap decoder_;
 
     /** udpating method in case we set a new data set */
     virtual void update();
 };
+
+template <class Array>
+Factor<Array>::Factor(): Base(), asInteger_(), nbLevels_(), levels_(), counts_(), encoder_() {}
+
+template <class Array>
+Factor<Array>::Factor( Array const& data): Base(data)
+                                         , asInteger_(p_data_->range())
+                                         , nbLevels_(0)
+                                         , levels_()
+                                         , counts_()
+                                         , encoder_()
+                                         , decoder_()
+{}
+
+/* Constructor.
+ *  @param p_data a pointer on the data set
+ **/
+template <class Array>
+Factor<Array>::Factor( Array const* p_data): Base(p_data)
+                                           , asInteger_()
+                                           , nbLevels_(0)
+                                           , levels_()
+                                           , counts_()
+                                           , encoder_()
+                                           , decoder_()
+{
+  if (p_data_)
+  {
+    asInteger_.resize(p_data_->range());
+    nbLevels_= 0;
+  }
+}
+
+template <class Array>
+Factor<Array>::Factor( Factor const& f): Base(f), asInteger_(f.asInteger_), nbLevels_(f.nbLevels_)
+                                       , levels_(f.levels_), counts_(f.counts_)
+                                       , encoder_(f.encoder_)
+                                       , decoder_(f.decoder_)
+{}
 
 template <class Array>
 void Factor<Array>::update()
@@ -124,11 +164,12 @@ void Factor<Array>::update()
    // if there is no data there is nothing to update
    if (p_data_)
    {
-     levels_.resize(p_data_->rows(),p_data_->cols());
-     nbLevels_.resize(p_data_->cols()).setValue(baseIdx - 1);
-     for(int j=coding_.begin(); j<std::min(coding_.end(), p_data_->cols().end()); ++j)
-     { coding_[j].clear();}
-     coding_.resize(p_data_->cols());
+     asInteger_.resize(p_data_->rows());
+     nbLevels_=0;
+     levels_.clear();
+     counts_.clear();
+     encoder_.clear();
+     decoder_.clear();
    }
 }
 
@@ -141,19 +182,24 @@ bool Factor<Array>::run()
   }
   try
   {
-    for (int j=p_data_->beginCols(); j< p_data_->endCols(); ++j)
+    for (int i=p_data_->begin(); i< p_data_->end(); ++i)
     {
-      for (int i=p_data_->beginRows(); i< p_data_->endRows(); ++i)
+      // find coding
+      Type idData = p_data_->elt(i);
+      typename EncodingMap::const_iterator it = encoder_.find(idData);
+      if (it != encoder_.end()) // levels already exist, just update the levels array
+      { asInteger_[i] = it->second;
+        counts_[it->second]++;  // add one to this level
+      }
+      else // find a new level to add
       {
-        // find coding
-        Type idData = p_data_->elt(i,j);
-        typename EncodeMap::const_iterator it = coding_[j].find(idData);
-        if (it != coding_[j].end()) { levels_(i,j) = it->second;}
-        else // find a new level to add
-        {
-          levels_(i,j) = (++nbLevels_[j]); // create a new level and set it
-          coding_[j].insert(std::pair<Type, int>(idData, nbLevels_[j]));
-        }
+        // create a new level and set it
+        asInteger_[i] = nbLevels_;
+        encoder_.insert(std::pair<Type, int>(idData, nbLevels_));
+        decoder_.insert(std::pair<int, Type>(nbLevels_, idData));
+        levels_.push_back(idData);
+        counts_.push_back(1); // start counting for this new level
+        nbLevels_++;
       }
     }
   }
