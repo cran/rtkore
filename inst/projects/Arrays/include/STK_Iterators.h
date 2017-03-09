@@ -38,6 +38,7 @@
 
 namespace std
 {
+
 /** defined in std namespace in order to use algorithm of the STL */
 template<class Derived>
 struct iterator_traits< STK::ArrayBase<Derived>::iterator>
@@ -74,9 +75,20 @@ class ExprBase<Derived>::const_iterator
 template<class Derived>
 class ArrayBase<Derived>::iterator
 {
-  public:
 
-    iterator(pointer ptr): ptr_(ptr) {}
+  protected:
+
+    typedef typename Derived::Type Type;
+    typedef typename Derived::Index Index;
+
+    enum { IsRowMajor = (Derived::Flags&RowMajorBit)==RowMajorBit };
+  public:
+    iterator(const Derived& expr, Index outer)
+      : m_expression(expr), m_inner(0), m_outer(outer), m_end(expr.innerSize())
+    {}
+
+    Type value() const
+    { return m_expression.elt(m_outer, m_inner);}
 
     iterator operator++() { iterator i = *this; ptr_++; return i; }
     iterator operator++(int junk) { ptr_++; return *this; }
@@ -87,8 +99,18 @@ class ArrayBase<Derived>::iterator
     bool operator==(const iterator& rhs) { return ptr_ == rhs.ptr_; }
     bool operator!=(const iterator& rhs) { return ptr_ != rhs.ptr_; }
 
-  private:
-    pointer ptr_;
+    InnerIterator& operator++() { m_inner++; return *this; }
+    Index index() const { return m_inner; }
+    inline Index row() const { return IsRowMajor ? m_outer : index(); }
+    inline Index col() const { return IsRowMajor ? index() : m_outer; }
+
+    operator bool() const { return m_inner < m_end && m_inner>=0; }
+
+  protected:
+    const Derived& m_expression;
+    Index m_inner;
+    const Index m_outer;
+    const Index m_end;
 };
 
 } // namespace STK
