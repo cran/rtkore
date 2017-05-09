@@ -35,7 +35,7 @@
 #ifndef STK_CALLOCATOR_H
 #define STK_CALLOCATOR_H
 
-#include "STK_ITContainer2D.h"
+#include "../STK_ITContainer2D.h"
 #include "STK_AllocatorBase.h"
 
 namespace STK
@@ -58,7 +58,7 @@ template< typename Type_, int SizeRows_, int SizeCols_, bool Orient_>
 struct Traits< CAllocator<Type_, SizeRows_, SizeCols_, Orient_> >
 {
   private:
-    class Void { };
+    class Void {};
 
   public:
     enum
@@ -87,15 +87,11 @@ struct Traits< CAllocator<Type_, SizeRows_, SizeCols_, Orient_> >
                                     , SubRow>::Result
                        , Void
                        >::Result SubVector;
-    /** If one of the Size is 1, we have a Vector (a column) or a Point (a row)
-     *  (What to do if both are = 1 : Type_ or array (1,1) ?).
-     **/
-    typedef typename If< (SizeRows_ >= SqrtUnknownSize)||(SizeCols_ >= SqrtUnknownSize)   // one row or one column
-                       , AllocatorBase<Type_, UnknownSize>
-                       , AllocatorBase<Type_, sizeProd_>
-                       >::Result Allocator;
+    /** Type of the base allocator allocating data */
+    typedef AllocatorBase<Type_, sizeProd_> Allocator;
     typedef Type_  Type;
     typedef typename RemoveConst<Type_>::Type const& ReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ConstReturnType;
 
     // use this as default. FIXME: Not optimal in case we just get a SubArray
     // with unmodified rows or cols size.
@@ -134,7 +130,7 @@ class OrientedCAllocator<Derived, Arrays::by_col_>: public ITContainer2D<Derived
     /** copy constructor */
     OrientedCAllocator( OrientedCAllocator const& A, bool ref)
                       : Base(A), ldx_(A.ldx()), allocator_(A.allocator_, ref)
-    { if (!ref) allocator_.copy(A.allocator_);}
+    { if (!ref) allocator_.assign(A.allocator_);}
     /** Reference constructor */
     template<class OtherDerived>
     inline OrientedCAllocator( OrientedCAllocator<OtherDerived, Arrays::by_col_> const& A
@@ -151,9 +147,9 @@ class OrientedCAllocator<Derived, Arrays::by_col_>: public ITContainer2D<Derived
   public:
     inline bool isRef() const { return allocator_.isRef();}
     /** @return a reference on the main pointer*/
-    inline Type*& p_data() { return allocator_.p_data();}
+    inline Type*& p_data() { return allocator_.p_data_;}
     /** @return a constant reference on the main pointer*/
-    inline Type* const& p_data() const { return allocator_.p_data();}
+    inline Type* const& p_data() const { return allocator_.p_data_;}
     /**  @return a reference on the memory manager */
     inline Allocator& allocator() { return allocator_;}
     /**  @return a constant reference on the memory manager */
@@ -250,7 +246,7 @@ class OrientedCAllocator<Derived, Arrays::by_row_>: public ITContainer2D<Derived
     /** copy constructor */
     OrientedCAllocator( OrientedCAllocator const& A, bool ref)
                              : Base(A), ldx_(A.ldx_), allocator_(A.allocator_, ref)
-    { if (!ref) allocator_.copy(A.allocator_);}
+    { if (!ref) allocator_.assign(A.allocator_);}
     /** Reference constructor */
     template<class OtherDerived>
     inline OrientedCAllocator( OrientedCAllocator<OtherDerived, Arrays::by_row_> const& A
@@ -268,9 +264,9 @@ class OrientedCAllocator<Derived, Arrays::by_row_>: public ITContainer2D<Derived
   public:
     inline bool isRef() const { return allocator_.isRef();}
     /** @return a reference on the main pointer*/
-    inline Type*& p_data() { return allocator_.p_data();}
+    inline Type*& p_data() { return allocator_.p_data_;}
     /** @return a constant reference on the main pointer*/
-    inline Type* const& p_data() const { return allocator_.p_data();}
+    inline Type* const& p_data() const { return allocator_.p_data_;}
     /**  @return a reference on the memory manager */
     inline Allocator& allocator() { return allocator_;}
     /**  @return a constant reference on the memory manager */
@@ -708,7 +704,7 @@ class CAllocator: public StructuredCAllocator<CAllocator<Type_, SizeRows_, SizeC
     CAllocator( int, int): Base(SizeRows_, SizeCols_) {}
     CAllocator( int, int, Type const& v): Base(SizeRows_, SizeCols_) { this->setValue(v);}
     CAllocator( CAllocator const& A, bool ref = true): Base(A, ref)
-    { if (!ref) { allocator_.copy(A.allocator_);} }
+    { if (!ref) { allocator_.assign(A.allocator_);} }
     template< int OtherSizeRows_, int OtherSizeCols_>
     inline CAllocator( CAllocator<Type, OtherSizeRows_, OtherSizeCols_, Orient_> const& A
                      , Range const& I, Range const& J)
@@ -719,15 +715,6 @@ class CAllocator: public StructuredCAllocator<CAllocator<Type_, SizeRows_, SizeC
     ~CAllocator() {}
     /**  clear allocated memories */
     void clear() {}
-    CAllocator& move(CAllocator const& T)
-    {
-      if (this == &T) return *this;
-      allocator_.move(T);
-      Base::move(T);
-      this->setRanges(T.rows(), T.cols());
-      this->setLdx(T.ldx());
-      return *this;
-    }
     CAllocator& resize2Impl( int, int) { return *this;}
     void realloc(int, int) {}
 };
@@ -765,7 +752,7 @@ class CAllocator<Type_, UnknownSize, UnknownSize, Orient_>
      *  @param ref : is this a wrapper of A ?
      **/
     CAllocator( CAllocator const& A, bool ref = true): Base(A, ref)
-    { if (!ref) { allocator_.copy(A.allocator_);}}
+    { if (!ref) { allocator_.assign(A.allocator_);}}
     /** Wrapper constructor. This become a reference on (some part of) the Allocator A.
      *  @param A original allocator
      *  @param I,J range of the rows and columns to wrap.
@@ -853,7 +840,7 @@ class CAllocator<Type_, SizeRows_, UnknownSize, Orient_>
     { this->setValue(v);}
     CAllocator( CAllocator const& A, bool ref = true)
                      : Base(A, ref)
-    { if (!ref) { allocator_.copy(A.allocator_);}}
+    { if (!ref) { allocator_.assign(A.allocator_);}}
     template< int OtherSizeRows_, int OtherSizeCols_>
     inline CAllocator( CAllocator<Type, OtherSizeRows_, OtherSizeCols_, Orient_> const& A
                      , Range const& I, Range const& J)
@@ -929,7 +916,7 @@ class CAllocator<Type_, UnknownSize, SizeCols_, Orient_>
     { this->setValue(v);}
     CAllocator( CAllocator const& A, bool ref = true)
                      : Base(A, ref)
-    { if (!ref) { allocator_.copy(A.allocator_);} }
+    { if (!ref) { allocator_.assign(A.allocator_);} }
 
     /** wrap other allocator */
     template< int OtherSizeRows_, int OtherSizeCols_>

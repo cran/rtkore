@@ -1,4 +1,4 @@
-### R code from vignette source 'rtkpp-introduction.Rnw'
+### R code from vignette source 'rtkpp-Arrays.Rnw'
 ### Encoding: UTF-8
 
 ###################################################
@@ -7,11 +7,5 @@
 library(rtkore)
 rtkore.version <- packageDescription("rtkore")$Version
 rtkore.date <- packageDescription("rtkore")$Date
-
-
-###################################################
-### code chunk number 2: rtkpp-introduction.Rnw:67-68
-###################################################
-.Call("stk_version", FALSE, PACKAGE="rtkore")
 
 

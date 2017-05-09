@@ -37,7 +37,7 @@
  *  @brief The Algebra project provides structures, tools and methods of the
  *  usual algebra techniques.
  *
- * The Algebra project propose some set of templated function for computing
+ * The Algebra project propose some set of template function for computing
  * dot product,  weighted dot product, vector norm, weighted vector norm
  * and so on... It proposes linear algebra methods for the ArrayXX
  * and the ArraySquareX classes:
@@ -69,6 +69,7 @@
 #include "../projects/Algebra/include/STK_Givens.h"
 #include "../projects/Algebra/include/STK_GramSchmidt.h"
 #include "../projects/Algebra/include/STK_Householder.h"
+#include "../projects/Algebra/include/STK_Cholesky.h"
 
 /* Algebra methods */
 #include "../projects/Algebra/include/STK_CG.h"

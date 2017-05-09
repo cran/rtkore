@@ -1,4 +1,4 @@
-### R code from vignette source 'rtkpp-arrays.Rnw'
+### R code from vignette source 'rtkpp-Utilities.Rnw'
 ### Encoding: UTF-8
 
 ###################################################

@@ -25,7 +25,7 @@
 /*
  * Project:  stkpp::STatistiK::MultiLaw
  * created on: 29 juil. 2011
- * Purpose:  define the templated MultiLaw::Normal law.
+ * Purpose:  define the template MultiLaw::Normal law.
  * Author:   iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
  *
  **/
@@ -143,7 +143,7 @@ class Normal: public MultiLaw::IMultiLaw<RowVector>
       { invEigenvalues_[j] = 1./decomp_.eigenValues()[j];}
       for (int j=end; j< mu_.end(); j++) { invEigenvalues_[j] = 0.;}
 
-      squareroot_ = decomp_.rotation() * decomp_.eigenValues().sqrt().diagonalize() * decomp_.rotation().transpose();
+      squareroot_ = decomp_.rotation() * decomp_.eigenValues().sqrt().asDiagonal() * decomp_.rotation().transpose();
     }
     /** @brief compute the probability distribution function (density) of the
      * multivariate normal law

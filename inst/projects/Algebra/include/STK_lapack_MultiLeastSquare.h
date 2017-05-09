@@ -101,7 +101,7 @@ class MultiLeastSquare: public ILeastSquare< MultiLeastSquare<ArrayB, ArrayA> >
      */
     MultiLeastSquare( ArrayB const& b, ArrayA const& a, bool isBref=false, bool isAref=false)
                     : Base(b, a, isBref, isAref), rcond_(-1) {};
-    /** @brief templated constructor
+    /** @brief template constructor
      *  @param b,a the left hand side and the right hand side of the least square
      *  problem.
      */
@@ -165,8 +165,8 @@ bool MultiLeastSquare<ArrayB, ArrayA>::runImpl(Weights const& w)
   STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Weights);
   Range brows = (b_.sizeRows()< a_.sizeCols()) ? a_.cols() : b_.rows();
   // local arrays, b is resized if necessary
-  CArrayXX a(w.sqrt().diagonalize() * a_), b(brows, b_.cols());
-  b.sub(b_.rows(), b_.cols()) = w.sqrt().diagonalize() * b_;
+  CArrayXX a(w.sqrt().asDiagonal() * a_), b(brows, b_.cols());
+  b.sub(b_.rows(), b_.cols()) = w.sqrt().asDiagonal() * b_;
   // start
   return computeLS(b,a);
 }

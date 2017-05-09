@@ -187,7 +187,7 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
       this->freeMem();
       this->setRanges();
       // initialize if necessary
-      this->mallocHo(this->cols());
+      this->mallocCols(this->cols());
       initializeCols(this->cols());
     }
     /** @brief Set new beginning indexes to the array.
@@ -418,7 +418,7 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
       if (this->sizeCols() <=0)
       {
         this->incLastIdxCols(n);
-        this->mallocHo( this->cols());
+        this->mallocCols( this->cols());
         initializeCols( this->cols());
       }
       else // else insert to the end of the array
@@ -446,7 +446,7 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
         // initialize columns of the array
         try
         {
-          this->mallocHo(range_ho);
+          this->mallocCols(range_ho);
         }
         catch (Exception const& error)   // if an error occur
         {
@@ -503,7 +503,7 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
         // initialize columns of the array
         try
         {
-          this->mallocHo(range_ho);
+          this->mallocCols(range_ho);
         }
         catch (Exception & error)   // if an error occur
         {
@@ -620,38 +620,9 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
      *  @note If the size match, @c this is not resized, and in this case,
      *  the method take care of the possibly of overlapping.
      *  @param src the array to copy
+     *  @return a copy of src
      **/
-    Derived& copy( IArray2D const& src)
-    {
-      // Resize if necessary.
-      if ( (this->sizeRows() != src.sizeRows()) ||(this->sizeCols() != src.sizeCols()) )
-      { this->resize(src.rows(), src.cols());}
-      // Copy without overlapping
-      if (src.beginRows()>=this->beginRows())
-      {
-        if (src.beginCols()>this->beginCols())
-        {
-          for ( int jSrc=src.beginCols(), jDst=this->beginCols(); jSrc<src.endCols(); jDst++, jSrc++)
-          { this->copyColumnForward(src, jDst, jSrc);}
-          return this->asDerived();
-        }
-        for ( int jSrc=src.lastIdxCols(), jDst=this->lastIdxCols(); jSrc>=src.beginCols(); jDst--, jSrc--)
-        { this->copyColumnForward(src, jDst, jSrc);}
-        return this->asDerived();
-      }
-      // src.beginRows()<this->beginRows()
-      if (src.beginCols()>=this->beginCols())
-      {
-        for ( int jSrc=src.beginCols(), jDst=this->beginCols(); jSrc<src.endCols(); jDst++, jSrc++)
-        { this->copyColumnBackward(src, jDst, jSrc);}
-        return this->asDerived();
-      }
-      // src.beginCols()<this->beginCols()
-      for ( int jSrc=src.lastIdxCols(), jDst=this->lastIdxCols(); jSrc>=src.beginCols(); jDst--, jSrc--)
-      { this->copyColumnBackward(src, jDst, jSrc);}
-
-      return this->asDerived();
-    }
+    Derived& assign( IArray2D const& src);
 
     /** overwrite @c this with @c src.
      *  @note this method does not take care of the possibility of overlapping
@@ -1197,6 +1168,44 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
     }
 };
 
+
+/** overwrite @c this with @c src.
+ *  @note If the size match, @c this is not resized, and in this case,
+ *  the method take care of the possibly of overlapping.
+ *  @param src the array to copy
+ **/
+template < class  Derived  >
+Derived& IArray2D<Derived>::assign( IArray2D const& src)
+{
+  // Resize if necessary.
+  if ( (this->sizeRows() != src.sizeRows()) ||(this->sizeCols() != src.sizeCols()) )
+  { this->resize(src.rows(), src.cols());}
+  // Copy without overlapping
+  if (src.beginRows()>=this->beginRows())
+  {
+    if (src.beginCols()>this->beginCols())
+    {
+      for ( int jSrc=src.beginCols(), jDst=this->beginCols(); jSrc<src.endCols(); jDst++, jSrc++)
+      { this->copyColumnForward(src, jDst, jSrc);}
+      return this->asDerived();
+    }
+    for ( int jSrc=src.lastIdxCols(), jDst=this->lastIdxCols(); jSrc>=src.beginCols(); jDst--, jSrc--)
+    { this->copyColumnForward(src, jDst, jSrc);}
+    return this->asDerived();
+  }
+  // src.beginRows()<this->beginRows()
+  if (src.beginCols()>=this->beginCols())
+  {
+    for ( int jSrc=src.beginCols(), jDst=this->beginCols(); jSrc<src.endCols(); jDst++, jSrc++)
+    { this->copyColumnBackward(src, jDst, jSrc);}
+    return this->asDerived();
+  }
+  // src.beginCols()<this->beginCols()
+  for ( int jSrc=src.lastIdxCols(), jDst=this->lastIdxCols(); jSrc>=src.beginCols(); jDst--, jSrc--)
+  { this->copyColumnBackward(src, jDst, jSrc);}
+
+  return this->asDerived();
+}
 } // namespace STK
 
 #endif

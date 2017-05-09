@@ -1,4 +1,4 @@
-### R code from vignette source 'rtkpp-QuickRef.Rnw'
+### R code from vignette source 'rtkpp-Introduction.Rnw'
 ### Encoding: UTF-8
 
 ###################################################
@@ -7,5 +7,11 @@
 library(rtkore)
 rtkore.version <- packageDescription("rtkore")$Version
 rtkore.date <- packageDescription("rtkore")$Date
+
+
+###################################################
+### code chunk number 2: rtkpp-Introduction.Rnw:55-56
+###################################################
+.Call("stk_version", FALSE, PACKAGE="rtkore")
 
 

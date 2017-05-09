@@ -2,24 +2,11 @@
 
 \documentclass[a4paper,10pt]{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage[english]{babel}
-\usepackage{graphicx}
-\usepackage{geometry}
-\usepackage{url}
-
-\usepackage{Sweave}
-
 %-------------------------
 % preamble for nice lsitings and notes
 \include{rtkpp-preamble}
-%
-%-------------------------
 
-%\geometry{top=3cm, bottom=3cm, left=2cm, right=2cm}
+\geometry{top=3cm, bottom=3cm, left=2cm, right=2cm}
 
 %% need no \usepackage{Sweave.sty}
 <<prelim,echo=FALSE,print=FALSE>>=
@@ -55,12 +42,14 @@ application greatly influence the speed and the memory usage of your application
 STK++ proposes a large choice of containers/arrays and methods that you can used
 in conjunction with them.
 
-There are mainly two kinds of arrays you can use with STK++:
+There are mainly two kinds of arrays and a wrapper you can use in \stkpp{}:
 \begin{itemize}
 \item The \code{Array2D} family classes which are the classes defined in the
 oldest versions of STK++,
 \item the \code{CArray} family classes which have been introduced in version
 0.4 of STK++ library.
+\item For \rtkore{} users, the \code{RVector} and \code{RMatrix} wrap the
+R \code{SEXP} stucture.
 \end{itemize}
 
 Before explaining the usage and differences between the different arrays,
