@@ -92,7 +92,6 @@ struct Traits< CArrayPoint<Type_, SizeCols_, Orient_> >
     typedef CAllocator<Type_, 1, SizeCols_, Orient_> Allocator;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type_>::Type const& ReturnType;
     typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
     enum
@@ -112,14 +111,14 @@ struct Traits< CArrayPoint<Type_, SizeCols_, Orient_> >
  * @brief declaration of  the point case.
  */
 template <typename Type_, int SizeCols_, bool Orient_>
-class CArrayPoint : public ICArray < CArrayPoint<Type_, SizeCols_, Orient_> >
+class CArrayPoint: public ICArray < CArrayPoint<Type_, SizeCols_, Orient_> >
 {
   public:
     typedef ICArray < CArrayPoint<Type_, SizeCols_, Orient_> > Base;
     typedef ArrayBase < CArrayPoint<Type_, SizeCols_, Orient_> > LowBase;
 
     typedef typename hidden::Traits<CArrayPoint<Type_, SizeCols_, Orient_> >::Type Type;
-    typedef typename hidden::Traits<CArrayPoint<Type_, SizeCols_, Orient_> >::ReturnType ReturnType;
+    typedef typename hidden::Traits<CArrayPoint<Type_, SizeCols_, Orient_> >::ConstReturnType ConstReturnType;
 
     enum
     {
@@ -162,7 +161,7 @@ class CArrayPoint : public ICArray < CArrayPoint<Type_, SizeCols_, Orient_> >
      *  @param J the columns range to wrap
      **/
     CArrayPoint( CArrayPoint const& T, Range const& J)
-               : Base(T, T.rows(), J) {}
+              : Base(T, T.rows(), J) {}
     /** constructor by reference, ref_=1.
      *  @param T the container to wrap
      *  @param J the range of the data to wrap
@@ -170,7 +169,7 @@ class CArrayPoint : public ICArray < CArrayPoint<Type_, SizeCols_, Orient_> >
      **/
     template<class OtherArray>
     CArrayPoint( ICArray<OtherArray> const& T, Range const& J, int row)
-               : Base(T.allocator(), Range(row, 1), J)
+              : Base(T.allocator(), Range(row, 1), J)
     {}
     /** wrapper constructor for 0 based C-Array.
      *  @param q pointer on the array
@@ -182,7 +181,7 @@ class CArrayPoint : public ICArray < CArrayPoint<Type_, SizeCols_, Orient_> >
      **/
     template<class OtherAllocator>
     CArrayPoint( ITContainer2D<OtherAllocator> const& allocator)
-                      : Base(allocator.asDerived())
+                     : Base(allocator.asDerived())
     {}
     /** Copy constructor using an expression.
      *  @param T the container to wrap

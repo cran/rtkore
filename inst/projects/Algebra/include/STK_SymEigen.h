@@ -80,7 +80,7 @@ struct AlgebraTraits< SymEigen<SquareArray_> >
  *  a determinant very small (but not exactly 0.0).
  **/
 template<class SquareArray>
-class SymEigen : public ISymEigen<SymEigen<SquareArray> >
+class SymEigen: public ISymEigen<SymEigen<SquareArray> >
 {
   public:
     typedef ISymEigen<SymEigen<SquareArray> > Base;
@@ -90,6 +90,9 @@ class SymEigen : public ISymEigen<SymEigen<SquareArray> >
     using Base::norm_;
     using Base::rank_;
     using Base::det_;
+
+    /** @brief Default Constructor */
+    SymEigen();
     /** @brief Constructor
      *  @param data reference on a symmetric square matrix
      *  @param ref @c true if we overwrite the data set, @c false otherwise
@@ -97,16 +100,16 @@ class SymEigen : public ISymEigen<SymEigen<SquareArray> >
      */
     SymEigen( SquareArray const& data, bool ref =false);
     /** constructor.
-     *  @param data A reference on the symmetric matrix to decompose.
+     *  @param data A reference on a symetric expression matrix to decompose.
      **/
     template<class Derived>
-    SymEigen( ExprBase<Derived> const& data): Base(data) {}
+    SymEigen( ExprBase<Derived> const& data);
     /** Copy constructor.
      *  @param S the EigenValue to copy
      **/
-    inline SymEigen( SymEigen const& S): Base(S) {}
+    SymEigen( SymEigen const& S);
     /** virtual destructor */
-    inline virtual ~SymEigen() {}
+    virtual ~SymEigen() {}
     /** clone pattern */
     inline virtual SymEigen* clone() const { return new SymEigen(*this);}
 
@@ -132,17 +135,20 @@ class SymEigen : public ISymEigen<SymEigen<SquareArray> >
     /** @brief compute the Householder matrix and P */
     void compHouse();
     /** computing the diagonalization of eigenValues_ and F_ */
-    void asDiagonal();
+    void diagonalize();
 };
 
 
+/* @brief Default Constructor */
+template<class SquareArray>
+SymEigen<SquareArray>::SymEigen(): Base() {}
 /* @brief Constructor
  *  @param data reference on a symmetric square matrix
  *  @param ref @c true if we overwrite the data set, @c false otherwise
  */
 template<class SquareArray>
-inline SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
-                                      : Base(data)
+SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
+                              : Base(data)
 {}
 /* @brief Constructor
  *  @param data reference on a symmetric square matrix
@@ -150,8 +156,21 @@ inline SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
  */
 template<>
 inline SymEigen<CSquareX>::SymEigen( CSquareX const& data, bool ref)
-                                   : Base(data, ref)
+                           : Base(data, ref)
 {}
+
+/* constructor.
+ *  @param data A reference on the symmetric matrix to decompose.
+ **/
+template<class SquareArray>
+template<class Derived>
+SymEigen<SquareArray>::SymEigen( ExprBase<Derived> const& data): Base(data) {}
+/* Copy constructor.
+*  @param S the EigenValue to copy
+**/
+template<class SquareArray>
+SymEigen<SquareArray>::SymEigen( SymEigen const& S): Base(S) {}
+
 /* Main methods.  */
 /* Compute diagonalization of the symmetric matrix */
 template<class SquareArray>
@@ -178,10 +197,10 @@ bool SymEigen<SquareArray>::runImpl()
     // compute eigenVectors_
     compHouse();
 #ifdef STK_ALGEBRA_VERBOSE
-    stk_cout << _T("calling SymEigen::asDiagonal()\n");
+    stk_cout << _T("calling SymEigen::diagonalize()\n");
 #endif
     // Diagonalize
-    asDiagonal();
+    diagonalize();
 #ifdef STK_ALGEBRA_VERBOSE
     stk_cout << _T("calling SymEigen::finalize()\n");
 #endif
@@ -317,9 +336,9 @@ void SymEigen<SquareArray>::compHouse()
   { eigenVectors_(range_.begin(), j) = 0.0; eigenVectors_(j, range_.begin()) = 0.0;}
 }
 
-// asDiagonal eigenValues_ and F_
+// diagonalize eigenValues_ and F_
 template<class SquareArray>
-void SymEigen<SquareArray>::asDiagonal()
+void SymEigen<SquareArray>::diagonalize()
 {
   // Diagonalisation of eigenVectors_
   for (int iend=range_.lastIdx(); iend>=range_.begin()+1; iend--)
@@ -382,7 +401,7 @@ void SymEigen<SquareArray>::asDiagonal()
       F_[ibeg-1] = 0.;
     } // iter
     if (iter == MAXITER)
-    { this->msg_error_ = _T("Warning, max iteration reached in SymEigen::asDiagonal()\n");}
+    { this->msg_error_ = _T("Warning, max iteration reached in SymEigen::diagonalize()\n");}
     // We have to sort the eigenvalues : we use a basic strategy
     Real z = eigenValues_[iend];        // current value
     for (int i=iend+1; i<eigenValues_.end(); i++)

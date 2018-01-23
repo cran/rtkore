@@ -37,27 +37,26 @@
 
 #include "STK_ITContainer.h"
 
-/// utility macro allowing to construct binary operators
-#define MAKE_BINARY_OPERATOR(OPERATOR, FUNCTOR) \
-  template<typename Rhs> \
-  inline BinaryOperator< FUNCTOR<Type, typename hidden::Traits<Rhs>::Type>, Derived, Rhs> const \
-  (OPERATOR)( ExprBase<Rhs> const& other) const \
-  { return BinaryOperator<FUNCTOR<Type, typename hidden::Traits<Rhs>::Type>, Derived, Rhs>(this->asDerived(), other.asDerived()) ;}
+/// utility macro allowing to define binary operators
+#define DEFINE_BINARY_OPERATOR(OPERATORNAME, BINARYOPERATORNAME) \
+template<typename Rhs> \
+typename hidden::OperatorHelper<Derived, Rhs, Arrays::BINARYOPERATORNAME>::Result const \
+OPERATORNAME( ExprBase<Rhs> const& other) const;
 
 /// utility macro allowing to construct unary operators
 #define MAKE_UNARY_OPERATOR_NOARG(FUNCTION, FUNCTOR) \
-  inline UnaryOperator<FUNCTOR<Type>, Derived> const FUNCTION() const \
+  inline UnaryOperator<FUNCTOR<Type>, Derived> FUNCTION() const \
   { return UnaryOperator<FUNCTOR<Type>, Derived>(this->asDerived()); }
 
-/// utility macro allowing to construct unary operators
+/// utility macro allowing to construct unary operators with one argument
 #define MAKE_UNARY_OPERATOR_1ARG(FUNCTION, FUNCTOR) \
-  inline UnaryOperator<FUNCTOR<Type>, Derived> const FUNCTION(Type const number) const \
-  { return UnaryOperator<FUNCTOR<Type>, Derived>(this->asDerived(), FUNCTOR<Type>(number)); }
+  inline UnaryOperator<FUNCTOR<Type>, Derived> FUNCTION(Type const& value) const \
+  { return UnaryOperator<FUNCTOR<Type>, Derived>(this->asDerived(), FUNCTOR<Type>(value)); }
 
-/// utility macro allowing to construct unary operators
+/// utility macro allowing to construct reshape operators
 #define MAKE_RESHAPE_OPERATOR(OPERATOR, SHAPE) \
-  inline OPERATOR< Derived> const SHAPE() const \
-  { return OPERATOR< Derived>(this->asDerived()); }
+  inline OPERATOR##Operator< Derived> const SHAPE() const \
+  { return OPERATOR##Operator< Derived>(this->asDerived()); }
 
 
 // forward declarations
@@ -65,7 +64,7 @@ namespace STK
 {
 template<class Derived> class ExprBase;
 template<class Derived> class ArrayBase;
-template<class Derived, class Rhs> struct  ProductReturnType;
+template<class Derived, class Rhs> struct  ProductProductType;
 template<class Derived> class  ArrayInitializer;
 } // namespace STK
 
@@ -77,6 +76,7 @@ template<class Derived> class  ArrayInitializer;
 #include "operators/STK_ReshapeOperators.h"
 #include "operators/STK_UnaryOperators.h"
 #include "operators/STK_BinaryOperators.h"
+#include "operators/STK_BinarySelector.h"
 
 namespace STK
 {
@@ -93,20 +93,12 @@ namespace STK
  **/
 
 template<class Derived>
-class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_>
+class ExprBase: public ITContainer<Derived, hidden::Traits<Derived>::structure_>
 {
   public:
     typedef ITContainer<Derived> Base;
     typedef typename hidden::Traits<Derived>::Type Type;
-    typedef typename hidden::Traits<Derived>::ReturnType ReturnType;
-
-//    typedef typename hidden::Traits<Derived>::Row Row;
-//    typedef typename hidden::Traits<Derived>::Col Col;
-// To add to the operators
-//    typedef typename hidden::Traits<Derived>::SubRow SubRow;
-//    typedef typename hidden::Traits<Derived>::SubCol SubCol;
-//    typedef typename hidden::Traits<Derived>::SubVector SubVector;
-//    typedef typename hidden::Traits<Derived>::SubArray SubArray;
+    typedef typename hidden::Traits<Derived>::ConstReturnType ConstReturnType;
 
     enum
     {
@@ -117,9 +109,6 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
       storage_   = hidden::Traits<Derived>::storage_
     };
 
-    /** constant iterator class for compatibility with the stl */
-    class const_iterator;
-
   protected:
     /** Default constructor */
     inline ExprBase(): Base() {}
@@ -127,27 +116,51 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
     inline ~ExprBase() {}
 
   public:
+    /** @return safely a constant value of the element (i,j) of the 2D container.
+      *  @param i,j row and column indexes
+      **/
+     inline ConstReturnType operator()(int i, int j) const
+     {
+ #ifdef STK_BOUNDS_CHECK
+       if (this->beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginRows() > i);}
+       if (this->endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endRows() <= i);}
+       if (this->beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginCols() > j);}
+       if (this->endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endCols() <= j);}
+ #endif
+       return this->elt(i,j);
+     }
+     /** @return reference on the ith element
+      *  @param i index of the ith element
+      **/
+     inline ConstReturnType operator[](int i) const
+     {
+       STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Derived);
+       return this->elt(i);
+     }
+     /** @return reference on the value */
+     inline ConstReturnType operator()() const { return this->elt();}
+
     //--------------
     // Start Visitors
     /** @brief Visit the container using a constant visitor
      *  @param visitor the visitor to run
      **/
     template<typename Visitor>
-    typename Visitor::ReturnType visit(Visitor& visitor) const;
-    /** @brief compute the number of non-zero element in an expression.
+    typename Visitor::ConstReturnType visit(Visitor& visitor) const;
+    /** @brief compute the value of non-zero element in an expression.
      *  For example
      *  @code
      *  (a > 0).count();
      *  @endcode
-     *  compute the number of positive element of the array @c a.
-     *  @return the number of non-zero element in the expression.*/
+     *  compute the value of positive element of the array @c a.
+     *  @return the value of non-zero element in the expression.*/
     int count() const;
     /** @brief check if there is any non-zero element in an expression.
      * For example
      *  @code
      *  (a > 0).any();
      *  @endcode
-     *  will return @c true if there exists positive numbers in the expression @c a.
+     *  will return @c true if there exists positive values in the expression @c a.
      *  @return @c true if at least one element is not zero in the expression, @c false otherwise.*/
     bool const any() const;
     /** @brief check if all the elements in an expression are not zero.
@@ -158,7 +171,7 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
      *  will return @c true if all the elements in the expression @c a are positive.
      *   @return @c true if all the elements are not zero in the expression, @c false otherwise.*/
     bool const all() const;
-    /** @return the number of available values in the array (not count NA values).*/
+    /** @return the value of available values in the array (not count NA values).*/
     int nbAvailableValues() const;
 
     /** @return the minimum of all elements of this using a Visitor
@@ -312,32 +325,50 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
     Type const wvarianceSafe(Type const& mean, ExprBase<Rhs> const& weights) const;
     // Visitors terminated
     //--------------------
+    // BinaryOperators
+    /** @return an expression with == operator of this and other.*/
+    DEFINE_BINARY_OPERATOR(operator==,equalOp_)
+    /** @return an expression with != operator of this and other.*/
+    DEFINE_BINARY_OPERATOR(operator!=,notEqualOp_)
+    /** @return an expression with > operator of this and other.*/
+    DEFINE_BINARY_OPERATOR(operator>,greaterThanOp_)
+    /** @return an expression with < operator of this and other*/
+    DEFINE_BINARY_OPERATOR(operator<,lessThanOp_)
+    /** @return an expression with >= operator of this and other.*/
+    DEFINE_BINARY_OPERATOR(operator>=,greaterThanOrEqualOp_)
+    /** @return an expression with <= operator of this and other.*/
+    DEFINE_BINARY_OPERATOR(operator<=,lessThanOrEqualOp_)
 
-    /** @return an expression from the difference of this and  other. */
-    MAKE_BINARY_OPERATOR(operator-,DifferenceOp)
     /** @return an expression with the addition of this and other. */
-    MAKE_BINARY_OPERATOR(operator+,SumOp)
-    /** @return an expression with the quotient of this and other. */
-    MAKE_BINARY_OPERATOR(operator/,DivOp)
+    DEFINE_BINARY_OPERATOR(operator+,sumOp_)
+    /** @return an expression from the difference of this and  other. */
+    DEFINE_BINARY_OPERATOR(operator-,differenceOp_)
     /** @return an expression with the product (element by element) of this and other.*/
-    MAKE_BINARY_OPERATOR(prod,ProductOp)
-    /** @return an expression with the min of this and other.*/
-    MAKE_BINARY_OPERATOR(min,MinOp)
-    /** @return an expression from the max of this and other.*/
-    MAKE_BINARY_OPERATOR(max,MaxOp)
-    /** @return an expression from the \< operator of this and other*/
-    MAKE_BINARY_OPERATOR(operator<,LessOp)
-    /** @return an expression from the \<= operator of this and other.*/
-    MAKE_BINARY_OPERATOR(operator<=,LeqOp)
-    /** @return an expression from the \> operator of this and other.*/
-    MAKE_BINARY_OPERATOR(operator>,GreaterOp)
-    /** @return an expression from the \>= operator of this and other.*/
-    MAKE_BINARY_OPERATOR(operator>=,GeqOp)
-    /** @return an expression from the == operator of this and other.*/
-    MAKE_BINARY_OPERATOR(operator==,EqualOp)
-    /** @return an expression from the != operator of this and other.*/
-    MAKE_BINARY_OPERATOR(operator!=,NotEqualOp)
+    DEFINE_BINARY_OPERATOR(prod,productOp_)
+    /** @return an expression with the quotient of this and other. */
+    DEFINE_BINARY_OPERATOR(operator/,divisionOp_)
+    /** @return an expression with the modulo of this and other. */
+    DEFINE_BINARY_OPERATOR(operator%,moduloOp_)
 
+    /** @return an expression with the min of this and other.*/
+    DEFINE_BINARY_OPERATOR(min,minOp_)
+    /** @return an expression with the max of this and other.*/
+    DEFINE_BINARY_OPERATOR(max,maxOp_)
+
+    /** @return an expression with the logical AND of this and other. */
+    DEFINE_BINARY_OPERATOR(operator&&,logicalAndOp_)
+    /** @return an expression with the logical OR of this and other. */
+    DEFINE_BINARY_OPERATOR(operator||,logicalOrOp_)
+
+    /** @return an expression with the bitwise AND of this and other. */
+    DEFINE_BINARY_OPERATOR(operator&,bitwiseAndOp_)
+    /** @return an expression with the bitwise OR of this and other. */
+    DEFINE_BINARY_OPERATOR(operator|,bitwiseOrOp_)
+    /** @return an expression with the bitwise XOR of this and other. */
+    DEFINE_BINARY_OPERATOR(operator^,bitwiseXorOp_)
+    // BinaryOperators terminated
+    //--------------------
+    // UnaryOperators
     /** @return an expression of the opposite of this */
     MAKE_UNARY_OPERATOR_NOARG(operator-, OppositeOp)
     /** @return which values of this is a NA value */
@@ -373,94 +404,139 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
     /** @return an expression of the cube of this. */
     MAKE_UNARY_OPERATOR_NOARG(cube, CubeOp)
 
-    /** @return an expression of the minimum of this and a number. */
-    MAKE_UNARY_OPERATOR_1ARG(min, MinimumOp)
-    /** @return an expression of the maximum of this and a number. */
-    MAKE_UNARY_OPERATOR_1ARG(max, MaximumOp)
-    /** @return an expression of this with each elements incremented by
-     *  the constant number */
-    MAKE_UNARY_OPERATOR_1ARG(operator+, AddOp)
-    /** @return an expression of this scaled by the number factor number */
-    MAKE_UNARY_OPERATOR_1ARG(operator*, MultipleOp)
+    // boolean operations
+    /** @return an expression of *this == value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator==, EqualWithOp)
+    /** @return an expression of *this != value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator!=, NotEqualWithOp)
+    /** @return an expression of *this > value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator>, GreaterThanOp)
+    /** @return an expression of *this < value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator<, LessThanOp)
+    /** @return an expression of *this <= value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator<=, LeqThanOp)
+    /** @return the expression of *this >= value. */
+    MAKE_UNARY_OPERATOR_1ARG(operator>=, GeqThanOp)
+
+    /** @return an expression of the minimum of this and a value. */
+    MAKE_UNARY_OPERATOR_1ARG(min, MinWithOp)
+    /** @return an expression of the maximum of this and a value. */
+    MAKE_UNARY_OPERATOR_1ARG(max, MaxWithOp)
+
+    /** @return an expression of this + value */
+    MAKE_UNARY_OPERATOR_1ARG(operator+, SumWithOp)
+    /** @return an expression of this - value */
+    MAKE_UNARY_OPERATOR_1ARG(operator-, DifferenceWithOp)
+    /** @return an expression of this * value */
+    MAKE_UNARY_OPERATOR_1ARG(operator*, ProductWithOp)
+    /** @return an expression of this divided by a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator/, DivisionWithOp)
+    /** @return an expression of this modulo a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator%, ModuloWithOp)
+
+    /** @return a logical expression of this AND a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator&&, LogicalAndWithOp)
+    /** @return a logical expression of this OR a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator||, LogicalOrWithOp)
+
+    /** @return a bitwise expression of this AND a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator&, BitwiseAndWithOp)
+    /** @return a bitwise expression of this OR a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator|, BitwiseOrWithOp)
+    /** @return a bitwise expression of this OR a value */
+    MAKE_UNARY_OPERATOR_1ARG(operator^, BitwiseXorWithOp)
+
     /** @return an expression of the power of this. */
     MAKE_UNARY_OPERATOR_1ARG(pow, PowOp)
-    /** @return an expression of this divided by the number value number */
+    /** @return an expression of this divided by the value */
     MAKE_UNARY_OPERATOR_1ARG(safeInverse, SafeInverseOp)
-    /** @return an expression of this divided by the number value number */
-    MAKE_UNARY_OPERATOR_1ARG(operator/, QuotientOp)
-    // boolean operations
-    /** @return an expression of *this < number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator<, LessThanOp)
-    /** @return an expression of *this <= number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator<=, LeqThanOp)
-    /** @return an expression of *this > number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator>, GreaterThanOp)
-    /** @return the expression of *this >= number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator>=, GeqThanOp)
-    /** @return an expression of *this == number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator==, EqualThanOp)
-    /** @return an expression of *this != number. */
-    MAKE_UNARY_OPERATOR_1ARG(operator!=, NotEqualThanOp)
 
-    // handle the case number + expression
-    /** @return an expression of number + this */
-    inline friend UnaryOperator<AddOp<Type>, Derived> const
-    operator+(Type const number, ExprBase<Derived> const& other)
-    { return other.asDerived() + number;}
-    /** @return an expression of number - this */
-    inline UnaryOperator<AddOp<Type>, Derived> const
-    operator-(Type const number) const
-    { return UnaryOperator<AddOp<Type>, Derived>(this->asDerived(), AddOp<Type>(-number));}
     /** @return a safe value of this */
-    inline UnaryOperator<SafeOp<Type>, Derived> const safe(Type const number = Type()) const
-    { return UnaryOperator<SafeOp<Type>, Derived>(this->asDerived(), SafeOp<Type>(number)); }
+    inline UnaryOperator<SafeOp<Type>, Derived> const safe(Type const value = Type()) const
+    { return UnaryOperator<SafeOp<Type>, Derived>(this->asDerived(), SafeOp<Type>(value)); }
+
     // friends
-    // handle the case number - expression
-    inline friend UnaryOperator<AddOppositeOp<Type>, Derived > const
-    operator-(Type const number, ExprBase<Derived> const& other)
-    { return UnaryOperator<AddOppositeOp<Type>, Derived>(other.asDerived(), AddOppositeOp<Type>(number));}
-    // handle the case number * expression
-    inline friend UnaryOperator< MultipleOp<Type>, Derived> const
-    operator*(Type const number, ExprBase<Derived> const& other)
-    { return other.asDerived()*number; }
-    // template
+    /** @return an expression of value + this */
+    inline friend UnaryOperator<SumWithOp<Type>, Derived> const
+    operator+(Type const& value, ExprBase<Derived> const& other)
+    { return other.asDerived() + value;}
+    /** @return an expression of value - this */
+    inline friend UnaryOperator<SumWithOp<Type>, Derived > const
+    operator-(Type const value, ExprBase<Derived> const& other)
+    { return UnaryOperator<SumWithOp<Type>, Derived>(other.asDerived(), SumWithOp<Type>(-value));}
+    /** @return an expression of value * this */
+    inline friend UnaryOperator< ProductWithOp<Type>, Derived> const
+    operator*(Type const value, ExprBase<Derived> const& other)
+    { return other.asDerived()*value; }
+
+    // templates
     /** @return an expression of *this with the  Type type casted to  OtherType. */
-    template<typename CastedType>
-    inline UnaryOperator<CastOp<Type, CastedType>, Derived> const cast() const
-    { return UnaryOperator<CastOp<Type, CastedType>, Derived>(this->asDerived());}
+    template<typename OtherType>
+    inline UnaryOperator<CastOp<Type, OtherType>, Derived> const cast() const
+    { return UnaryOperator<CastOp<Type, OtherType>, Derived>(this->asDerived());}
     /** @return an expression of funct0 to this. */
     template< template<typename> class OtherOperator>
     inline UnaryOperator<OtherOperator<Type>, Derived> const funct0() const
     { return UnaryOperator<OtherOperator<Type>, Derived>(this->asDerived());}
     /** @return an expression of funct1 to this. */
     template< template<typename> class OtherOperator>
-    inline UnaryOperator<OtherOperator<Type>, Derived> const funct1(Type const number) const
-    { return UnaryOperator<OtherOperator<Type>, Derived>(this->asDerived(), OtherOperator<Type>(number));}
+    inline UnaryOperator<OtherOperator<Type>, Derived> const funct1(Type const value) const
+    { return UnaryOperator<OtherOperator<Type>, Derived>(this->asDerived(), OtherOperator<Type>(value));}
 
+    // reshape operations
     /** @return the transposed expression of this. */
-    MAKE_RESHAPE_OPERATOR(TransposeOperator,transpose)
-    /** @return this as a diagonal expression (work only with 1D expressions). */
-    MAKE_RESHAPE_OPERATOR(DiagonalizeOperator,asDiagonal)
-    /** @return the diagonal of this expression (work only with square expressions). */
-    MAKE_RESHAPE_OPERATOR(DiagonalOperator,diagonalize)
-    /** @return the upper part of this expression. */
-    MAKE_RESHAPE_OPERATOR(UpperTriangularizeOperator,upperTriangularize)
-    /** @return the lower part of this expression. */
-    MAKE_RESHAPE_OPERATOR(LowerTriangularizeOperator,lowerTriangularize)
+    MAKE_RESHAPE_OPERATOR(Transpose,transpose)
+    /** @return this as a diagonal 1D expression (work only with vector/point/diagonal expressions). */
+    MAKE_RESHAPE_OPERATOR(Diagonalize,diagonalize)
+    /** @return the diagonal of this square expression (work only with square expressions). */
+    MAKE_RESHAPE_OPERATOR(DiagonalGetter,getDiagonal)
+    /** @return the upper triangular part of this expression. */
+    MAKE_RESHAPE_OPERATOR(UpperTriangularize,upperTriangularize)
+    /** @return the lower triangular part of this expression. */
+    MAKE_RESHAPE_OPERATOR(LowerTriangularize,lowerTriangularize)
+    /** @return this as a symmetric expression (work only with square expressions). */
+    MAKE_RESHAPE_OPERATOR(Symmetrize,symmetrize)
+    /** @return the upper part of this symmetric expression (work only with square expressions). */
+    MAKE_RESHAPE_OPERATOR(UpperSymmetrize,upperSymmetrize)
+    /** @return the lower part of this symmetric expression (work only with square expressions). */
+    MAKE_RESHAPE_OPERATOR(LowerSymmetrize,lowerSymmetrize)
+
+    // slice operators
+    /** @return the sub-vector(I) of this. */
+    template<int Size_>
+    inline SubVectorOperator<Derived, Size_> const sub(TRange<Size_> const& I) const
+    {
+      STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Derived);
+      return SubVectorOperator<Derived, Size_>(this->asDerived(), I);
+    }
 
     /** @return the j-th column of this. */
-    inline ColOperator<Derived> col(int j) const
+    inline ColOperator<Derived> const col(int j) const
     { return ColOperator<Derived> (this->asDerived(), j);}
     /** @return the i-th row of this. */
-    inline RowOperator<Derived> row(int i) const
+    inline RowOperator<Derived> const row(int i) const
     { return RowOperator<Derived> (this->asDerived(), i);}
-    /** @return the sub-vector(I) of this. */
-    inline SubOperator<Derived> sub(Range I) const
-    { return SubOperator<Derived> (this->asDerived(), I);}
+    /** @return the range J of columns of this. */
+    template<int Size_>
+    inline SubOperator<Derived, sizeRows_, Size_> const col(TRange<Size_> const& J) const
+    { return SubOperator<Derived, sizeRows_, Size_> (this->asDerived(), this->rows(), J);}
+    /** @return the range I of rows of this. */
+    template<int Size_>
+    inline SubOperator<Derived, Size_, sizeCols_> const row(TRange<Size_> const& I) const
+    { return SubOperator<Derived, Size_, sizeCols_> (this->asDerived(), I, this->cols());}
 
+    /** @return the sub-array(I,J) of this. */
+    template<int SizeRows_, int SizeCols_>
+    inline SubOperator<Derived, SizeRows_, SizeCols_> const sub(TRange<SizeRows_> const& I,TRange<SizeCols_> const& J) const
+    {
+      STK_STATIC_ASSERT_TWO_DIMENSIONS_ONLY(Derived);
+      return SubOperator<Derived, SizeRows_, SizeCols_>(this->asDerived(), I, J);
+    }
+
+    // dot operations
     /** @returns the dot product of this with other.
-      * @sa squaredNorm(), norm(), DotProduct
-      */
+     *  @sa norm2(), norm(), DotProduct
+     */
     template<class Rhs>
     typename hidden::Promote<Type, typename Rhs::Type>::result_type const
     dot(ExprBase<Rhs> const& other) const;
@@ -473,15 +549,21 @@ class ExprBase : public ITContainer<Derived, hidden::Traits<Derived>::structure_
 
     /** @return the matrix multiplication of this with other.*/
     template<typename Rhs>
-    typename ProductReturnType<Derived, Rhs>::ReturnType const
+    typename ProductProductType<Derived, Rhs>::ProductType const
     operator*( ExprBase<Rhs> const& other) const;
 };
 
-#undef MAKE_BINARY_OPERATOR
+} // namespace STK
+
+//#undef MAKE_BINARY_OPERATOR
 #undef MAKE_UNARY_OPERATOR_NOARG
 #undef MAKE_UNARY_OPERATOR_1ARG
 #undef MAKE_RESHAPE_OPERATOR
 
-} // namespace STK
+#include "STK_ExprBaseVisitor.h"
+#include "STK_ExprBaseDot.h"
+#include "STK_ExprBaseProduct.h"
+#include "STK_ExprBaseOperators.h"
+
 
 #endif /* STK_EXPRBASE_H_ */

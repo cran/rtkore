@@ -37,24 +37,22 @@
  *  Container Class.
  **/
 
-#ifndef STK_DENSEARRAYBASE_H
-#define STK_DENSEARRAYBASE_H
+#ifndef STK_ICARRAY_H
+#define STK_ICARRAY_H
 
-#include "STK_ArrayBase.h"
+#include "STK_IArrayBase.h"
 
-#include "STK_ExprBaseVisitor.h"
-#include "STK_ExprBaseDot.h"
-#include "STK_ExprBaseProduct.h"
 #include "STK_ArrayBaseApplier.h"
 #include "STK_ArrayBaseAssign.h"
 #include "STK_ArrayBaseInitializer.h"
 
 namespace STK
 {
+template< typename Type, int SizeRows_ = UnknownSize, int SizeCols_ = UnknownSize, bool Orient_ = Arrays::by_col_> class CArray;
+template< typename Type, int SizeCols_, bool Orient_> class CArrayPoint;
+template< typename Type, int SizeRows_, bool Orient_> class CArrayVector;
+template< typename Type, bool Orient_> class CArrayNumber;
 
-namespace hidden
-{
-}
 /** @class ICArray
   * @ingroup Arrays
   *
@@ -69,10 +67,10 @@ namespace hidden
   * @tparam Derived is the derived type, e.g., a matrix type.
   */
 template<class Derived>
-class ICArray : public ArrayBase<Derived>
+class ICArray: public IArrayBase<Derived>
 {
   public:
-    typedef ArrayBase<Derived> Base;
+    typedef IArrayBase<Derived> Base;
 
     typedef typename hidden::Traits<Derived>::Type Type;
     typedef typename hidden::Traits<Derived>::Row  Row;
@@ -100,34 +98,26 @@ class ICArray : public ArrayBase<Derived>
     /** allocator of the memory  */
     Allocator allocator_;
     /** default constructor. */
-    ICArray() : Base(), allocator_() {}
+    ICArray(): Base(), allocator_() {}
     /** constructor with specified sizes.
      *  @param sizeRows,sizeCols size of the rows and columns
      **/
-    ICArray( int sizeRows, int sizeCols)
-           : Base(), allocator_(sizeRows, sizeCols)
-    {}
+    ICArray( int sizeRows, int sizeCols): Base(), allocator_(sizeRows, sizeCols) {}
     /** constructor with specified sizes and value.
      *  @param sizeRows,sizeCols size of the rows and columns
      *  @param value the value to set
      **/
-    ICArray( int sizeRows, int sizeCols, Type const& value)
-           : Base(), allocator_(sizeRows, sizeCols, value)
-    {}
+    ICArray( int sizeRows, int sizeCols, Type const& value): Base(), allocator_(sizeRows, sizeCols, value) {}
     /** copy or wrapper constructor.
      *  @param T size of the rows
      *  @param ref is this owning its own data ?
      **/
-    ICArray( Derived const& T, bool ref = false)
-           : Base(), allocator_(T.allocator_, ref)
-    {}
+    ICArray( Derived const& T, bool ref = false): Base(), allocator_(T.allocator_, ref) {}
     /** wrapper constructor for 0 based C-Array.
      *  @param q pointer on the array
      *  @param sizeRows,sizeCols size of the rows and columns
      **/
-    ICArray( Type* const& q, int sizeRows, int sizeCols)
-           : Base(), allocator_(q, sizeRows, sizeCols)
-    {}
+    ICArray( Type* const& q, int sizeRows, int sizeCols): Base(), allocator_(q, sizeRows, sizeCols){}
     /** constructor by reference, ref_=1.
      *  @param allocator the allocator to wrap
      *  @param I,J range of the rows and columns to wrap
@@ -190,17 +180,21 @@ class ICArray : public ArrayBase<Derived>
     /** implement the col operator using a reference on the column of the allocator */
     inline Col colImpl(int j) const { return  Col( allocator_.col(j));}
     /** implement the col operator using a reference on the column of the allocator */
-    inline SubCol colImpl(Range const& I, int j) const { return SubCol( allocator_.col( I, j));}
-
-    /** implement the row operator using a reference on the rows of the allocator */
-    inline SubArray rowImpl(Range const& I) const { return SubArray( allocator_.sub(I, this->cols()));}
-    /** implement the col operator using a reference on the columns of the allocator */
-    inline SubArray colImpl(Range const& J) const { return SubArray( allocator_.sub( this->rows(), J));}
-    /** implement the sub operator for 2D arrays using a reference on the column of the allocator */
-    inline SubArray subImpl(Range const& I, Range const& J) const { return SubArray(allocator_.sub(I, J));}
+    inline SubCol colImpl(Range const& I, int j) const { return SubCol( allocator_.template col<UnknownSize>( I, j));}
 
     /** implement the sub operator for 1D arrays using a reference on the raw/column of the allocator */
-    inline SubVector subImpl( Range const& J) const { return SubVector( allocator_.sub(J));}
+    inline SubVector subImpl( Range const& J) const
+    { return SubVector( allocator_.template sub<UnknownSize>(J));}
+
+    /** implement the row operator using a reference on the rows of the allocator */
+    inline CArray<Type, UnknownSize, sizeCols_, orient_> rowImpl(Range const& I) const
+    { return CArray<Type, UnknownSize, sizeCols_, orient_>( allocator_.template sub<UnknownSize, sizeCols_>(I, this->cols()));}
+    /** implement the col operator using a reference on the columns of the allocator */
+    inline CArray<Type, sizeRows_, UnknownSize, orient_> colImpl(Range const& J) const
+    { return CArray<Type, sizeRows_, UnknownSize, orient_>( allocator_.template sub<sizeRows_, UnknownSize>( this->rows(), J));}
+    /** implement the sub operator for 2D arrays using a reference on the column of the allocator */
+    inline CArray<Type, UnknownSize, UnknownSize, orient_> subImpl(Range const& I, Range const& J) const
+    { return CArray<Type, UnknownSize, UnknownSize, orient_>(allocator_.template sub<UnknownSize, UnknownSize>(I, J));}
 
     /** swap two elements: only for vectors an points. */
     void swap(int i, int  j) { std::swap(this->elt(i), this->elt(j)); }
@@ -278,6 +272,9 @@ class ICArray : public ArrayBase<Derived>
                        ||(structure_ == (int)Arrays::diagonal_)
                        ||(structure_ == (int)Arrays::lower_triangular_)
                        ||(structure_ == (int)Arrays::upper_triangular_)
+                       ||(structure_ == (int)Arrays::symmetric_)
+                       ||(structure_ == (int)Arrays::lower_symmetric_)
+                       ||(structure_ == (int)Arrays::upper_symmetric_)
                       ,YOU_CANNOT_USED_THIS_METHOD_WITH_THIS_KIND_OF_ARRAY);
       if (!hidden::CheckShift<Derived, structure_>::isAllowed(this->asDerived(), I, J))
       { STKRUNTIME_ERROR_2ARG(ICArray::resize,I,J,not permited);}
@@ -304,4 +301,4 @@ class ICArray : public ArrayBase<Derived>
 
 } // namespace STK
 
-#endif /* STK_DENSEARRAYBASE_H */
+#endif /* STK_ICARRAY_H */

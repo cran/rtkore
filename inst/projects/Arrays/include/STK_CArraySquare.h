@@ -104,7 +104,6 @@ struct Traits< CArraySquare<Type_, Size_, Orient_> >
     typedef CAllocator<Type_, Size_, Size_, Orient_> Allocator;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type_>::Type const& ReturnType;
     typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
     enum
@@ -113,6 +112,7 @@ struct Traits< CArraySquare<Type_, Size_, Orient_> >
       orient_    = Orient_,
       sizeRows_  = Size_,
       sizeCols_  = Size_,
+      size_      = Size_,
       storage_   = Arrays::dense_
     };
 };
@@ -130,7 +130,7 @@ class CArraySquare: public ICArray < CArraySquare<Type_, Size_, Orient_> >
     typedef ArrayBase < CArraySquare<Type_, Size_, Orient_> > LowBase;
 
     typedef typename hidden::Traits< CArraySquare <Type_, Size_> >::Type Type;
-    typedef typename hidden::Traits< CArraySquare <Type_, Size_> >::ReturnType ReturnType;
+    typedef typename hidden::Traits< CArraySquare <Type_, Size_> >::ConstReturnType ConstReturnType;
 
     enum
     {
@@ -141,7 +141,7 @@ class CArraySquare: public ICArray < CArraySquare<Type_, Size_, Orient_> >
       storage_   = hidden::Traits< CArraySquare <Type_, Size_, Orient_> >::storage_
     };
     /** Default constructor. */
-    CArraySquare() : Base() {}
+    CArraySquare(): Base() {}
     /** constructor with specified dimension.
      *  @param size range of the columns
      **/

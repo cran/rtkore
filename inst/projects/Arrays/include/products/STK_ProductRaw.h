@@ -38,9 +38,14 @@
 namespace STK
 {
 /* size of the block and panels used in the product algorithm */
-const int blockSize = 4;
-const int panelSize = 64;
+const int blockSize_ = 4;
+const int panelSize_ = 64;
+const int panelTotal= 256; // = 64 * 4
+
 const int vectorSize = 256;
+
+typedef TRange<panelSize_> panelRange;
+typedef TRange<blockSize_> blockRange;
 
 namespace hidden
 {
@@ -50,9 +55,9 @@ namespace hidden
 template<class Type>
 struct Panel
 {
-  Type panel[blockSize*panelSize];
-      inline Type const& operator[](int i) const { return panel[i];}
-  Type& operator[](int i) { return panel[i];}
+  Type panel[blockSize_*panelSize_];
+  inline Type const& operator[](int i) const { return panel[i];}
+  inline Type& operator[](int i) { return panel[i];}
 };
 
 /** @ingroup hidden
@@ -61,9 +66,9 @@ struct Panel
 template<class Type>
 struct Block
 {
-  Type block[blockSize*blockSize];
+  Type block[blockSize_*blockSize_];
   inline Type const& operator[](int i) const { return block[i];}
-  Type& operator[](int i) { return block[i];}
+  inline Type& operator[](int i) { return block[i];}
 };
 
 /** @ingroup hidden
@@ -72,9 +77,9 @@ struct Block
 template<class Type>
 struct RawVec
 {
-  Type vec[panelSize];
+  Type vec[panelSize_];
   inline Type const& operator[](int i) const { return vec[i];}
-  Type& operator[](int i) { return vec[i];}
+  inline Type& operator[](int i) { return vec[i];}
 };
 
 /** @ingroup hidden
@@ -85,18 +90,12 @@ template<typename Lhs, typename Rhs, typename Result>
 struct MultCoefImpl
 {
   typedef typename Result::Type Type;
-  enum
-  {
-    sizeRows_  = Result::sizeRows_,
-    sizeCols_  = Result::sizeCols_,
-    orient_    = Result::orient_,
-    storage_   = Result::storage_
-  };
+
   /** dot product. general by general*/
   static void dot( Lhs const& lhs, Rhs const& rhs, Result& res, int iRow, int jCol)
   {
     res.elt(iRow, jCol) = Type(0);
-    Range const dotRange = Range::inf(lhs.rangeColsInRow(iRow), rhs.rangeRowsInCol(jCol));
+    Range const dotRange = inf(lhs.rangeColsInRow(iRow), rhs.rangeRowsInCol(jCol));
     for (int k=dotRange.begin(); k< dotRange.end(); ++k)
       res.elt(iRow, jCol) += lhs.elt(iRow, k) * rhs.elt(k, jCol);
   }
@@ -105,16 +104,16 @@ struct MultCoefImpl
                  , ITContainer2D<Result>& res, int iRow)
   {
     res.elt(iRow) = Type(0);
-    Range const dotRange = Range::inf(lhs.rangeColsInRow(iRow), rhs.range());
+    Range const dotRange = inf(lhs.rangeColsInRow(iRow), rhs.range());
     for (int k=dotRange.begin(); k< dotRange.end(); ++k)
       res.elt(iRow) += lhs.elt(iRow, k) * rhs.elt(k);
   }
-  /** dot product. general by vector */
+  /** dot product. point by general */
   static void dot( ITContainer<Lhs, Arrays::point_> const& lhs
                  , Rhs const& rhs, ITContainer2D<Result>& res, int jCol)
   {
     res.elt(jCol) = Type(0);
-    Range const dotRange = Range::inf(rhs.rangeRowsInCol(jCol), lhs.range());
+    Range const dotRange = inf(rhs.rangeRowsInCol(jCol), lhs.range());
     for (int k=dotRange.begin(); k< dotRange.end(); ++k)
       res.elt(jCol) += lhs.elt(k) * rhs.elt(k, jCol);
   }

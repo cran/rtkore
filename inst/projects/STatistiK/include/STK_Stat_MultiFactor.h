@@ -36,6 +36,9 @@
 #define STK_STAT_MULTIFACTOR_H
 
 #include <Sdk/include/STK_IRunner.h>
+#include <Arrays/include/STK_CArrayPoint.h>
+#include <Arrays/include/STK_CArray.h>
+#include <Arrays/include/STK_Array2DVector.h>
 
 namespace STK
 {
@@ -55,8 +58,6 @@ class MultiFactor: public IRunnerWithData<Array>
 {
   public:
     typedef IRunnerWithData<Array> Base;
-    typedef typename Array::Row RowVector;
-    typedef typename Array::Col ColVector;
     typedef typename Array::Type Type;
 
     typedef std::map<Type, int> EncodingMap;

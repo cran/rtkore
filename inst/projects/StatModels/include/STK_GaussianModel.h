@@ -49,7 +49,7 @@ namespace STK
  *  statistical model.
  **/
 template <class Array>
-class GaussianModel : public IGaussianModel<Array>
+class GaussianModel: public IGaussianModel<Array>
 {
   public:
     typedef IGaussianModel<Array> Base;
@@ -57,8 +57,8 @@ class GaussianModel : public IGaussianModel<Array>
     using Base::nbVariable;
     using Base::mean_;
 
-    typedef typename Array::Col ColVector;
-    typedef typename Array::Row RowVector;
+    typedef typename hidden::Traits<Array>::Col ColVector;
+    typedef typename hidden::Traits<Array>::Row RowVector;
     /** constructor.
      * @param p_data pointer on the data set
      */
@@ -101,7 +101,7 @@ class GaussianModel : public IGaussianModel<Array>
 /* constructor */
 template <class Array>
 GaussianModel<Array>::GaussianModel( Array const* p_dataij)
-                                  : Base(p_dataij)
+                                 : Base(p_dataij)
                                   , cov_(p_dataij_->cols())
                                   , p_law_(0)
 {
@@ -111,7 +111,7 @@ GaussianModel<Array>::GaussianModel( Array const* p_dataij)
 /* constructor */
 template <class Array>
 GaussianModel<Array>::GaussianModel( Array const& data)
-                                   : Base(data)
+                                  : Base(data)
                                    , cov_(data.cols())
                                    , p_law_(0)
 { setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);}

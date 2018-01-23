@@ -28,95 +28,29 @@
  * Author:   iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
  **/
 
-/** @file STK_InvertFixedSizeSymMatrix.h
+/** @file STK_SymInvert.h
  *  @brief In this file we implement inversion method for fixed size symmetric matrices.
  **/
 
-#ifndef STK_INVERTFIXEDSIZESYMMATRIX_H
-#define STK_INVERTFIXEDSIZESYMMATRIX_H
+#ifndef STK_SYMINVERT_H
+#define STK_SYMINVERT_H
 
-#include <Arrays/include/STK_CArray.h>
+#ifdef STKUSELAPACK
+#include <Algebra/include/STK_lapack_SymEigen.h>
+#else
+#include <Algebra/include/STK_SymEigen.h>
+#endif
 
 namespace STK
 {
 
-/** @ingroup Algebra
- *  @brief compute the inverse of the symmetric 1x1 matrix m using only its lower part
- *  and store the result in inv.
- *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
- **/
-template<class Matrix>
-static typename Matrix::Type invertSymMatrix11( Matrix const& m, CArraySquare<typename Matrix::Type, 1>& inv);
-/** @ingroup Algebra
- *  @brief compute the inverse of the symmetric 2x2 matrix m using only its lower part
- *  and store the result in inv.
- *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
- **/
-template<class Matrix>
-static typename Matrix::Type invertSymMatrix22( Matrix const& m, CArraySquare<typename Matrix::Type, 2>& inv);
-/** @ingroup Algebra
- *  @brief compute the inverse of the symmetric 3x3 matrix m using only its lower part
- *  and store the result in inv.
- *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
- **/
-template<class Matrix>
-static typename Matrix::Type invertSymMatrix33( Matrix const& m, CArraySquare<typename Matrix::Type, 3>& inv);
-/** @ingroup Algebra
- *  @brief compute the inverse of the symmetric 4x4 matrix m using only its lower part
- *  and store the result in inv.
- *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
- **/
-template<class Matrix>
-static typename Matrix::Type invertSymMatrix44( Matrix const& m, CArraySquare<typename Matrix::Type, 4>& inv);
-
 namespace hidden
 {
-/** @ingroup hidden utility class allowing to call the correct static function
- *  computing the inverse of a symetric matrix. */
-template<class Matrix, int Size> struct invertSymMatrixDispatcher;
-
-template<class Matrix>
-struct invertSymMatrixDispatcher<Matrix, 1>
-{
-  typedef typename Matrix::Type Type;
-  inline static Type run( Matrix const& m, CArraySquare<Type, 1>& inv)
-  { return invertSymMatrix11(m, inv);}
-};
-
-template<class Matrix>
-struct invertSymMatrixDispatcher<Matrix, 2>
-{
-  typedef typename Matrix::Type Type;
-  inline static Type run( Matrix const& m, CArraySquare<Type, 2>& inv)
-  { return invertSymMatrix22(m, inv);}
-};
-
-template<class Matrix>
-struct invertSymMatrixDispatcher<Matrix, 3>
-{
-  typedef typename Matrix::Type Type;
-  inline static Type run( Matrix const& m, CArraySquare<Type, 3>& inv)
-  { return invertSymMatrix33(m, inv);}
-};
-
-template<class Matrix>
-struct invertSymMatrixDispatcher<Matrix, 4>
-{
-  typedef typename Matrix::Type Type;
-  inline static Type run( Matrix const& m, CArraySquare<Type, 4>& inv)
-  { return invertSymMatrix44(m, inv);}
-};
-
-} // namespace hidden
-
-/* compute the inverse of the symmetric 2x2 matrix m using only its lower part
- *  and store the result in inv.
+/** @ingroup Algebra
+ *  @brief compute the inverse of the symmetric matrix m of size 1x1 and store
+ *  the result in inv.
  *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
+ *  @return The determinant value of m
  **/
 template<class Matrix>
 static typename Matrix::Type invertSymMatrix11( Matrix const& m, CArraySquare<typename Matrix::Type, 1>& inv)
@@ -131,10 +65,11 @@ static typename Matrix::Type invertSymMatrix11( Matrix const& m, CArraySquare<ty
   inv /= det;
   return det;
 }
-/* compute the inverse of the symmetric 2x2 matrix m using only its lower part
+/** @ingroup Algebra
+ *  @brief compute the inverse of the symmetric 2x2 matrix m using only its lower part
  *  and store the result in inv.
  *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
+ *  @return The determinant value of m
  **/
 template<class Matrix>
 static typename Matrix::Type invertSymMatrix22( Matrix const& m, CArraySquare<typename Matrix::Type, 2>& inv)
@@ -157,10 +92,11 @@ static typename Matrix::Type invertSymMatrix22( Matrix const& m, CArraySquare<ty
   inv /= det;
   return det;
 }
-/** compute the inverse of the symmetric 3x3 matrix m using only its lower part
+/** @ingroup Algebra
+ *  @brief compute the inverse of the symmetric 3x3 matrix m using only its lower part
  *  and store the result in inv.
  *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
+ *  @return The determinant value of m
  **/
 template<class Matrix>
 static typename Matrix::Type invertSymMatrix33( Matrix const& m, CArraySquare<typename Matrix::Type, 3>& inv)
@@ -186,10 +122,11 @@ static typename Matrix::Type invertSymMatrix33( Matrix const& m, CArraySquare<ty
   inv /= det;
   return det;
 }
-/* compute the inverse of the symmetric 4x4 matrix m using only its lower part
+/** @ingroup Algebra
+ *  @brief compute the inverse of the symmetric 4x4 matrix m using only its lower part
  *  and store the result in inv.
  *  @param m, inv the matrices to invert and its inverse
- *  @return @c true if m is invertible, @c false otherwise
+ *  @return The determinant value of m
  **/
 template<class Matrix>
 static typename Matrix::Type invertSymMatrix44( Matrix const& m, CArraySquare<typename Matrix::Type, 4>& inv)
@@ -250,44 +187,77 @@ static typename Matrix::Type invertSymMatrix44( Matrix const& m, CArraySquare<ty
 }
 
 /** @ingroup Algebra
- *  @brief The InvertSymMatrix class is a functor class allowing to compute the
- *  inverse of a symmetric matrix. It is specialized for fixed sized matrices.
- */
-template<class Matrix, int Size> class InvertSymMatrix
+ *  @brief compute the inverse of the symmetric 4x4 matrix m using only its lower part
+ *  and store the result in inv.
+ *  @note if the matrix is not invertible, the result will be a generalized inverse.
+ *  @param m, inv the matrices to invert and its inverse
+ *  @return The determinant value of m
+ **/
+template<class Matrix, int Size_>
+static typename Matrix::Type invertSymMatrixXX( Matrix const& m, CArraySquare<typename Matrix::Type, Size_>& inv)
 {
-  public:
-    typedef typename Matrix::Type Type;
-    /** Constructor */
-    inline InvertSymMatrix( ArrayBase<Matrix> const& m)
-                          : m_(m.asDerived())
-                          , inv_(_R(0,Size-1))
-                          , det_(hidden::invertSymMatrixDispatcher<Matrix, Size>::run(m_, inv_))
-                          , isInvertible_(det_!=0)
-    {}
-    /** Destructor */
-    inline virtual ~InvertSymMatrix() {}
+  typedef typename Matrix::Type Type;
+#ifdef STKUSELAPACK
+      lapack::SymEigen<Matrix> decomp(m);
+      decomp.setUplo('L'); // default is U
+#else
+      SymEigen<Matrix> decomp(m);
+#endif
+  if (!decomp.run()) return Type(0);
+  // compute tolerance
+  Type tol = Arithmetic<Type>::epsilon() *decomp.norm();
+  if (tol == 0) { tol = Arithmetic<Type>::min();}
+  // compute (generalized) inverse matrix
+  inv = decomp.rotation() * decomp.eigenValues().safeInverse(tol).diagonalize() * decomp.rotation().transpose();
+  return decomp.det();
+}
 
-    /** @return the inverse of the matrix m_ */
-    inline CArraySquare<Type, Size> const& inv() const { return inv_;}
-    /** @return the determinant of the matrix m_ */
-    inline Type const& det() const { return det_;}
-    /** @return @c true if the matrix m_ is invertible, @c false otherwise */
-    inline bool const& isInvertible() const { return isInvertible_;}
 
-    /** compute the inverse of the matrix m_. */
-    inline CArraySquare<Type, Size> const& operator()() { return inv_;}
-
-  protected:
-    /** a constant reference on the 4x4 matrix m_ to invert */
-    Matrix const& m_;
-    /** The inverse (or adjugate matrix if det_ is zero) of m_ */
-    CArraySquare<Type, Size> inv_;
-    /** determinant of the matrix m_ */
-    Type det_;
-    /** @c true if the matrix m_ is invertible */
-    bool isInvertible_;
+/** @ingroup hidden utility class allowing to call the correct static function
+ *  computing the inverse of a symetric matrix.
+ **/
+template<class Matrix, int Size_>
+struct invertSymMatrixDispatcher
+{
+  typedef typename Matrix::Type Type;
+  inline static Type run( Matrix const& m, CArraySquare<Type, Size_>& inv)
+  { return invertSymMatrixXX(m, inv);}
 };
+
+template<class Matrix>
+struct invertSymMatrixDispatcher<Matrix, 1>
+{
+  typedef typename Matrix::Type Type;
+  inline static Type run( Matrix const& m, CArraySquare<Type, 1>& inv)
+  { return invertSymMatrix11(m, inv);}
+};
+
+template<class Matrix>
+struct invertSymMatrixDispatcher<Matrix, 2>
+{
+  typedef typename Matrix::Type Type;
+  inline static Type run( Matrix const& m, CArraySquare<Type, 2>& inv)
+  { return invertSymMatrix22(m, inv);}
+};
+
+template<class Matrix>
+struct invertSymMatrixDispatcher<Matrix, 3>
+{
+  typedef typename Matrix::Type Type;
+  inline static Type run( Matrix const& m, CArraySquare<Type, 3>& inv)
+  { return invertSymMatrix33(m, inv);}
+};
+
+template<class Matrix>
+struct invertSymMatrixDispatcher<Matrix, 4>
+{
+  typedef typename Matrix::Type Type;
+  inline static Type run( Matrix const& m, CArraySquare<Type, 4>& inv)
+  { return invertSymMatrix44(m, inv);}
+};
+
+} // namespace hidden
 
 } // namespace STK
 
-#endif /* STK_INVERTFIXEDSIZESYMMATRIX_H */
+#endif /* STK_SYMINVERT_H */

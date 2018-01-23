@@ -88,7 +88,7 @@ namespace STK
   * @sa Array2DSquare.
  **/
 template < class  Derived  >
-class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, Derived>
+class IArray2D: public IArray2DBase< typename hidden::Traits<Derived>::Type*, Derived>
 {
   public:
      typedef typename hidden::Traits<Derived>::Type Type;
@@ -112,18 +112,18 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
 
  protected:
     /** Default constructor */
-    IArray2D() : Base() {}
+    IArray2D(): Base() {}
     /** Constructor with specified ranges
      *  @param I range of the Rows
      *  @param J range of the Cols
      **/
-    IArray2D( Range const& I, Range const& J) : Base(I, J)
+    IArray2D( Range const& I, Range const& J): Base(I, J)
     { initializeCols(J);}
     /** Copy constructor
      *  @param T the array to copy
      *  @param ref true if we wrap T
      **/
-    IArray2D( const IArray2D& T, bool ref =false) : Base(T, ref)
+    IArray2D( const IArray2D& T, bool ref =false): Base(T, ref)
     {
       if (!ref)
       {
@@ -139,14 +139,14 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
      **/
     template<class OtherArray>
     IArray2D( IArray2D<OtherArray> const& T, Range const& I, Range const& J)
-            : Base(T, I, J)
+           : Base(T, I, J)
     {}
     /** Wrapper constructor the Container is a ref.
      *  @param q pointer on data
      *  @param I range of the Rows to wrap
      *  @param J range of the Columns to wrap
      **/
-    IArray2D( Type** q, Range const& I, Range const& J) : Base(q, I, J) {}
+    IArray2D( Type** q, Range const& I, Range const& J): Base(q, I, J) {}
     /** destructor.
      *  free the vertically allocated memory (the columns). The horizontally
      *  allocated memory is handled by the Allocator class.
@@ -624,23 +624,6 @@ class IArray2D : public IArray2DBase< typename hidden::Traits<Derived>::Type*, D
      **/
     Derived& assign( IArray2D const& src);
 
-    /** overwrite @c this with @c src.
-     *  @note this method does not take care of the possibility of overlapping
-     *  @param src the array to copy
-     **/
-    template<class OtherDerived>
-    Derived& copy( ExprBase<OtherDerived> const& src)
-    {
-      // Resize if necessary.
-      if ( (this->sizeRows() != src.sizeRows()) ||(this->sizeCols() != src.sizeCols()) )
-      { this->resize(src.rows(), src.cols());}
-      // copy
-      for ( int jSrc=src.beginCols(), jDst=this->beginCols(); jSrc<src.endCols(); jDst++, jSrc++)
-        for ( int iSrc=src.beginRows(), iDst=this->beginRows(); iSrc<src.endRows(); iDst++, iSrc++)
-      { this->elt(iDst, jDst) = src(iSrc, jSrc);}
-      // return this
-      return this->asDerived();
-    }
     /** merge (by value) the array other with this.
      *  @param other the array to merge to this
      **/

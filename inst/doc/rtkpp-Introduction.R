@@ -10,7 +10,7 @@ rtkore.date <- packageDescription("rtkore")$Date
 
 
 ###################################################
-### code chunk number 2: rtkpp-Introduction.Rnw:55-56
+### code chunk number 2: rtkpp-Introduction.Rnw:54-55
 ###################################################
 .Call("stk_version", FALSE, PACKAGE="rtkore")
 

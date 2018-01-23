@@ -54,10 +54,13 @@ class Linear: public IKernelBase<Array>
 {
   public:
     typedef IKernelBase<Array> Base;
-    typedef typename Array::Row RowVector;
+    typedef typename Array::Type Type;
     using Base::p_data_;
     using Base::gram_;
-    using Base::symmetrize;
+    using Base::hasRun_;
+
+    /** Default constructor */
+    Linear(): Base(0) {}
     /** constructor with a constant pointer on the data set
      *  @param p_data a pointer on a data set that will be "kernelized"
      **/
@@ -66,24 +69,55 @@ class Linear: public IKernelBase<Array>
      *  @param data a reference on a data set that will be "kernelized"
      **/
     Linear(Array const& data): Base(data) {}
+    /** constructor with an array of parameter.
+     *  @param p_data a pointer on a data set that will be "kernelized"
+     *  @param param array of parameter
+     **/
+    template<class Derived>
+    Linear( Array const* p_data, ExprBase<Derived> const& param): Base(p_data)
+    {}
+    /** constructor with a constant pointer on the data set
+     *  @param data a reference on a data set that will be "kernelized"
+     *  @param param array of parameter
+     **/
+    template<class Derived>
+    Linear( Array const& data, ExprBase<Derived> const& param): Base(data)
+    {}
+
     /** destructor */
     virtual ~Linear() {}
-    /** compute the kernel value between two individuals
-     *  @param ind1,ind2 two individuals to compare using the kernel metric */
-    virtual Real kcomp(RowVector const& ind1, RowVector const& ind2) const;
-    /** compute the kernel between an individual and himself
-     *  @param ind the individual to evaluate using the kernel
+    /** Set parameter using an array
+     *  @param param array of parameter
      **/
-    virtual Real kdiag(RowVector const& ind) const;
+    template<class Derived>
+    void setParam(  ExprBase<Derived> const& param) {}
+
+    /** virtual method.
+     *  @return diagonal value of the kernel for the ith individuals.
+     *  @param i index of the individual
+     **/
+    virtual Real diag(int i) const;
+    /** virtual method implementation.
+     *  @return value of the kernel for the ith and jth individuals.
+     *  @param i,j indexes of the individuals
+     **/
+    virtual Real comp(int i, int j) const;
 };
 
+/* virtual method.
+ *  @return diagonal value of the kernel for the ith individuals.
+ *  @param i index of the individual
+ **/
 template<class Array>
-Real Linear<Array>::kcomp(RowVector const& ind1, RowVector const& ind2) const
-{ return ind1.dot(ind2);}
+inline Real Linear<Array>::diag(int i) const
+{ return hasRun_ ? gram_(i,i)
+                 :  p_data_->row(i).norm2();
+}
 
 template<class Array>
-Real Linear<Array>::kdiag(RowVector const& ind) const
-{ return ind.norm2();}
+Real Linear<Array>::comp(int i, int j) const
+{ return hasRun_ ? gram_(i,j)
+                 :  p_data_->row(i).dot(p_data_->row(j));}
 
 } // namespace Kernel
 

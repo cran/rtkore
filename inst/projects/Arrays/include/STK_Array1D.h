@@ -40,8 +40,6 @@
 namespace STK
 {
 template<class Type, int Size_ = UnknownSize > class Array1D;
-//template<class Derived> struct RandomIterator1D;
-//template<class Derived> struct ConstRandomIterator1D;
 
 namespace hidden
 {
@@ -59,7 +57,6 @@ struct Traits< Array1D<Type_, Size_> >
   typedef Array1D<Type_, UnknownSize> SubVector;
 
   typedef Type_ Type;
-  typedef typename RemoveConst<Type_>::Type const& ReturnType;
   typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
   enum
@@ -91,8 +88,8 @@ struct Traits< Array1D<Type_, Size_> >
 namespace STK
 {
 /** @ingroup Arrays
- *  @brief Templated one dimensional Arrays.
- * 
+ *  @brief template one dimensional Arrays.
+ *
  * An Array1D is a template non-oriented container (even if the @c Traits
  * struct define it as column oriented) implementing the interface
  * class @c IArray1D.

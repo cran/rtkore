@@ -152,18 +152,18 @@ template <class Array>
 class IGaussianModel: public IStatModel< IGaussianModel<Array> >
 {
   typedef IStatModel< IGaussianModel<Array> > Base;
-  typedef typename Array::Row RowVector;
-  typedef typename Array::Col ColVector;
+  typedef typename hidden::Traits<Array>::Row RowVector;
+  typedef typename hidden::Traits<Array>::Col ColVector;
 
   protected:
     /** constructor.
      * @param p_data pointer on the data set
      **/
-    IGaussianModel( Array const* p_data) : Base(p_data) {}
+    IGaussianModel( Array const* p_data): Base(p_data) {}
     /** constructor.
      * @param data reference on the data set
      **/
-    IGaussianModel( Array const& data) : Base(data) {}
+    IGaussianModel( Array const& data): Base(data) {}
 
   public:
     /** destructor. */

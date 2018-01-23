@@ -69,7 +69,6 @@ struct Traits<Array2DSquare<Type_> >
     typedef Void                 SubVector;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type_>::Type const& ReturnType;
     typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
     enum
@@ -78,6 +77,7 @@ struct Traits<Array2DSquare<Type_> >
       orient_    = Arrays::by_col_,
       sizeRows_  = UnknownSize,
       sizeCols_  = UnknownSize,
+      size_      = UnknownSize,
       storage_   = Arrays::dense_ // always dense
     };
 };
@@ -94,7 +94,7 @@ struct Traits<Array2DSquare<Type_> >
   * The range of the rows and the columns is the same.
   **/
 template<class Type_>
-class Array2DSquare : public IArray2D< Array2DSquare<Type_> >
+class Array2DSquare: public IArray2D< Array2DSquare<Type_> >
 {
   public:
     /** Type for the Interface Class. */
@@ -109,7 +109,7 @@ class Array2DSquare : public IArray2D< Array2DSquare<Type_> >
     typedef typename hidden::Traits<Array2DSquare<Type_> >::SubArray SubArray;
 
     typedef typename hidden::Traits<Array2DSquare<Type_> >::Type Type;
-    typedef typename hidden::Traits<Array2DSquare<Type_> >::ReturnType ReturnType;
+    typedef typename hidden::Traits<Array2DSquare<Type_> >::ConstReturnType ConstReturnType;
 
     enum
     {
@@ -136,12 +136,12 @@ class Array2DSquare : public IArray2D< Array2DSquare<Type_> >
      *  @param T the container to copy
      *  @param ref true if T is wrapped
      **/
-    Array2DSquare( Array2DSquare const&T, bool ref=false) : Base(T, ref) {}
+    Array2DSquare( Array2DSquare const&T, bool ref=false): Base(T, ref) {}
     /** constructor by reference, ref_=1 in the range given by I.
      *  @param T the Container to wrap
      *  @param I range of the container to wrap
      **/
-    Array2DSquare( Array2DSquare const& T, Range const& I) : Base(T, I, I) {}
+    Array2DSquare( Array2DSquare const& T, Range const& I): Base(T, I, I) {}
     /** Copy constructor using an expression.
      *  @param T the container to wrap
      **/

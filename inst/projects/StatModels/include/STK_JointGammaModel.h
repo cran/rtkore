@@ -107,28 +107,28 @@ struct JointGammaParameters: public IMultiParameters<JointGammaParameters>
  * \f]
  **/
 template <class Array, class WColVector>
-class JointGammaModel : public IMultiStatModel<Array, WColVector, JointGammaParameters >
+class JointGammaModel: public IMultiStatModel<Array, WColVector, JointGammaParameters >
 {
 
   public:
     /** Type of the data contained in the container */
     typedef typename Array::Type Type;
     /** Type of the row vector of the container */
-    typedef typename Array::Row RowVector;
+    typedef typename hidden::Traits<Array>::Row RowVector;
     /** Type of the column vector of the container */
-    typedef typename Array::Col ColVector;
+    typedef typename hidden::Traits<Array>::Col ColVector;
     /** Base class */
     typedef IMultiStatModel<Array, WColVector, JointGammaParameters > Base;
     using Base::p_data;
     using Base::p_param;
     /** default constructor. */
-    JointGammaModel() : Base() {}
+    JointGammaModel(): Base() {}
     /** Constructor with data set. */
-    JointGammaModel(Array const& data) : Base(data){}
+    JointGammaModel(Array const& data): Base(data){}
     /** Constructor with a ptr on the data set. */
-    JointGammaModel(Array const* p_data) : Base(p_data){}
+    JointGammaModel(Array const* p_data): Base(p_data){}
     /** Copy constructor. */
-    JointGammaModel(JointGammaModel const& model) : Base(model) {}
+    JointGammaModel(JointGammaModel const& model): Base(model) {}
     /** destructor */
     virtual ~JointGammaModel(){}
     /** clone pattern. @return a clone of this. */
@@ -157,7 +157,7 @@ class JointGammaModel : public IMultiStatModel<Array, WColVector, JointGammaPara
       return sum;
     }
   protected:
-    class dloglikelihood : public IFunction<dloglikelihood >
+    class dloglikelihood: public IFunction<dloglikelihood >
     {
       public:
         dloglikelihood( Real const& mean, Real const& meanLog)

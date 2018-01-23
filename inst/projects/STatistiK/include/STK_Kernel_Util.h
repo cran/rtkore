@@ -48,7 +48,8 @@ namespace Kernel
  **/
 enum kernelType
 {
-  exponential_,
+  laplace_,
+  exponential_, // deprecated
   gaussian_,
   linear_,
   polynomial_,
@@ -61,7 +62,7 @@ enum kernelType
  *  Convert a String to a kernelType. The recognized strings are
  * <table >
  * <tr> <th> Kernel             </th> </tr>
- * <tr> <td> "Exponential"   </td></tr>
+ * <tr> <td> "Laplace"   </td></tr>
  * <tr> <td> "Gaussian"    </td></tr>
  * <tr> <td> "Linear"    </td></tr>
  * <tr> <td> "Polynomial"     </td></tr>
@@ -74,6 +75,7 @@ enum kernelType
  **/
 inline kernelType stringToKernelType( std::string const& type)
 {
+  if (toUpperString(type) == toUpperString(_T("Laplace"))) return laplace_;
   if (toUpperString(type) == toUpperString(_T("Exponential"))) return exponential_;
   if (toUpperString(type) == toUpperString(_T("Gaussian"))) return gaussian_;
   if (toUpperString(type) == toUpperString(_T("Linear"))) return linear_;
@@ -90,7 +92,8 @@ inline kernelType stringToKernelType( std::string const& type)
  **/
 inline String kernelTypeToString( kernelType const& type)
 {
-  if (type == exponential_) return String(_T("Exponential"));
+  if (type == exponential_) return String(_T("Exponential")); // deprecated
+  if (type == laplace_) return String(_T("Laplace"));
   if (type == gaussian_) return String(_T("Gaussian"));
   if (type == linear_) return String(_T("Linear"));
   if (type == polynomial_) return String(_T("Polynomial"));

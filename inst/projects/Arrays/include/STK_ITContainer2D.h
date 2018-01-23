@@ -79,7 +79,7 @@ class IContainer2D
     ~IContainer2D() {}
 
     /** @return the columns range */
-    inline ColRange const&cols() const { return cols_;}
+    inline ColRange const &cols() const { return cols_;}
     /** @return the index of the first column */
     inline int beginCols() const { return cols_.begin();}
     /** @return the ending index of the columns */
@@ -222,7 +222,7 @@ class IContainer2D
  * implements @c ITContainer1D. For example
  * <code>
  * template<class Type>
- * class Derived : public ITContainer1D< Derived<Type> >
+ * class Derived: public ITContainer1D< Derived<Type> >
  * {...}
  * </code>
  *
@@ -261,8 +261,8 @@ class IContainer2D
  * are using derived classes for storing any kind of data.
  **/
 template <class Derived>
-class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, hidden::Traits<Derived>::sizeCols_>
-                    , public IRecursiveTemplate<Derived>
+class ITContainer2D: public IContainer2D< hidden::Traits<Derived>::sizeRows_, hidden::Traits<Derived>::sizeCols_>
+                   , public IRecursiveTemplate<Derived>
 {
   public:
     typedef typename hidden::Traits<Derived>::Type Type;
@@ -276,7 +276,7 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
     enum
     {
       // TODO: structure_ is not part of the CAllocator class
-      //structure_ = hidden::Traits<Derived>::structure_,
+      structure_ = hidden::Traits<Derived>::structure_,
       orient_    = hidden::Traits<Derived>::orient_,
       sizeRows_  = hidden::Traits<Derived>::sizeRows_,
       sizeCols_  = hidden::Traits<Derived>::sizeCols_,
@@ -295,15 +295,15 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
 
   protected:
     /** Default constructor.*/
-    ITContainer2D() : Base2D(), Base() {}
+    ITContainer2D(): Base2D(), Base() {}
     /** constructor with specified Range.
      *  @param I,J range of the rows and columns
      **/
-    inline ITContainer2D( Range const& I, Range const& J) : Base2D(I, J), Base() {}
+    inline ITContainer2D( RowRange const& I, ColRange const& J): Base2D(I, J), Base() {}
     /** Copy constructor.
      *  @param T the container to copy
      **/
-    inline ITContainer2D( ITContainer2D const& T) : Base2D(T), Base() {}
+    inline ITContainer2D( ITContainer2D const& T): Base2D(T), Base() {}
     /** destructor. */
     ~ITContainer2D() {}
 
@@ -318,14 +318,10 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
     inline Type& elt(int i, int j)
     {
 #ifdef STK_BOUNDS_CHECK
-      if (this->beginRows() > i)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginRows() > i);}
-      if (this->endRows() <= i)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endRows() <= i);}
-      if (this->beginCols() > j)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginCols() > j);}
-      if (this->endCols() <= j)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endCols() <= j);}
+      if (this->beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginRows() > i);}
+      if (this->endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endRows() <= i);}
+      if (this->beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginCols() > j);}
+      if (this->endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endCols() <= j);}
 #endif
       return this->asDerived().elt2Impl(i,j);
     }
@@ -335,14 +331,10 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
     inline Type const& elt(int i, int j) const
     {
 #ifdef STK_BOUNDS_CHECK
-      if (this->beginRows() > i)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginRows() > i);}
-      if (this->endRows() <= i)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endRows() <= i);}
-      if (this->beginCols() > j)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginCols() > j);}
-      if (this->endCols() <= j)
-      { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endCols() <= j);}
+      if (this->beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginRows() > i);}
+      if (this->endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endRows() <= i);}
+      if (this->beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, beginCols() > j);}
+      if (this->endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainer2D::elt, i, j, endCols() <= j);}
 #endif
       return this->asDerived().elt2Impl(i,j);
     }
@@ -363,57 +355,31 @@ class ITContainer2D : public IContainer2D< hidden::Traits<Derived>::sizeRows_, h
      *  @param i index of the row
      *  @return a reference on the ith row
      **/
-    inline Row row(int i) const
-    { return Row(this->asDerived(), Range(i,1), this->cols());}
-    /** Access to the row (i,J) of the Allocator.
-     *  @param i,J index of the row and range of the columns
-     *  @return a reference on the ith row
-     **/
-    inline SubRow row(int i, Range const& J) const
-    { return SubRow(this->asDerived(), Range(i,1), J);}
+    inline Row row(int i) const { return Row(this->asDerived(), TRange<1>(i,1), this->cols());}
     /** Access to the jth column of the Allocator.
      *  @param j index of the column
      *  @return a reference on the jth column
      **/
-    inline Col col(int j) const
-    { return Col(this->asDerived(), this->rows(), Range(j,1));}
-    /** Access to the column (I,j) of the Allocator.
-     *  @param I,j range of the rows and index of the column
-     *  @return a reference on the jth column
-     **/
-    inline SubCol col(Range const& I, int j) const
-    { return SubCol(this->asDerived(), I, Range(j,1));}
-    /** Access to the sub-part (I,J) of the Allocator.
-     *  @param I,J range of the rows and columns
-     *  @return a reference on a sub-part of the Allocator
-     **/
-    inline SubArray sub(Range const& I, Range const& J) const
-    { return SubArray(this->asDerived(), I, J);}
-    /** Access to a sub-vector. For 1D allocators only.
-     *  @param I range of the rows
-     *  @return a reference on a sub-part of the Allocaor
-     **/
-    inline SubVector sub(Range const& I) const
-    { return this->asDerived().sub1Impl(I);}
-    /** shift the first indexes of the allocator.
-     *  @param firstRow, firstCol indexes of the first row and first column
-     **/
-    void shift( int firstRow, int firstCol)
-    { this->asDerived().shift2Impl(firstRow, firstCol);}
+    inline Col col(int j) const { return Col(this->asDerived(), this->rows(), TRange<1>(j,1));}
+
     /** resize the allocator
      *  @param sizeRows, sizeCols size of the rows and columns
      **/
-    Derived& resize(int sizeRows, int sizeCols)
-    { return this->asDerived().resize2Impl(sizeRows, sizeCols);}
+    Derived& resize(int sizeRows, int sizeCols) { return this->asDerived().resize2Impl(sizeRows, sizeCols);}
+    /** Resize the vector or the point
+     *  @param size the size to set to the vector
+     **/
+    Derived& resize(int size) { return this->asDerived().resize1Impl(size);}
+
+    /** shift the first indexes of the allocator.
+     *  @param firstRow, firstCol indexes of the first row and first column
+     **/
+    void shift( int firstRow, int firstCol) { this->asDerived().shift2Impl(firstRow, firstCol);}
     /** shift the first indexes of the vector or point.
      *  @param beg the index of the first row or column
      **/
     void shift(int beg) { this->asDerived().shift1Impl(beg);}
-    /** Resize the vector or the point
-     *  @param size the size to set to the vector
-     **/
-    Derived& resize(int size)
-    { return this->asDerived().resize1Impl(size);}
+
     /** @param pos1, pos2 position of the first and second columns to swap */
     void swapCols(int pos1, int pos2)
     {

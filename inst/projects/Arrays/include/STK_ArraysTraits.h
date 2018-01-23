@@ -61,7 +61,6 @@ namespace hidden
  *     typedef Array1D<Type_, UnknownSize> SubVector;
  *
  *     typedef Type_ Type;
- *     typedef typename RemoveConst<Type_>::Type const& ReturnType;
  *     typedef typename RemoveConst<Type>::Type const& ConstReturnType;
  *
  *     enum
@@ -87,31 +86,6 @@ namespace hidden
  *  @sa STK::Array1D, STK::Array2D, STK::CArray, STK::List1D
  */
 template <typename Derived> struct Traits;
-
-/** @ingroup hidden, Array
- *  @brief The traits struct IteratorTraits must be specialized for any iterator
- *  derived from the base class IteratorBase.
- *  We use the type names defined by the STL for the iterator_traits class.
- *
- *  For example:
- *  @code
- *  template<typename Type>
- *  struct IteratorTraits
- *  {
- *    /// One of the iterator_tags types
- *    typedef std::random_access_iterator_tag  iterator_category;
- *    /// The type "pointed to" by the iterator.
- *    typedef Type        value_type;
- *    /// Distance between iterators is represented as this type.
- *    typedef int  difference_type;
- *    /// This type represents a pointer-to-value_type.
- *    typedef Type*   pointer;
- *    /// This type represents a reference-to-value_type.
- *    typedef Type& reference;
- *  };
- *  @endcode
- */
-template <typename Derived> struct IteratorTraits;
 
 /** @ingroup hidden, Array
  *  @brief Traits class to get the correct returned Structure, Type, allocator,...

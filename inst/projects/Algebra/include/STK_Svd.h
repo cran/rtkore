@@ -70,7 +70,7 @@ struct AlgebraTraits< Svd<Array_> >
 
 /** Computing the bidiagonalization of M.
  *  The diagonal and the subdiagonal are stored in D and F
- *  @param M the matrix to bi-asDiagonal, the matrix is overwritten
+ *  @param M the matrix to bi-diagonalize, the matrix is overwritten
  *  with the left and right Householder vectors.
  *  The method return the estimate of the inf norm of M.
  *  @param D the element of the diagonal
@@ -110,12 +110,12 @@ static void leftEliminate( ArrayDiagonalX& D
  *  and it is possible to compute some (all) vectors of Ker(A).
  **/
 template<class Array>
-class Svd : public ISvd<Svd<Array> >
+class Svd: public ISvd<Svd<Array> >
 {
   public :
     typedef ISvd< Svd<Array> > Base;
-    typedef typename Array::Col ColVector;
-    typedef typename Array::Row RowVector;
+    typedef typename hidden::Traits<Array>::Col ColVector;
+    typedef typename hidden::Traits<Array>::Row RowVector;
     using Base::U_;
     using Base::D_;
     using Base::V_;
@@ -134,7 +134,7 @@ class Svd : public ISvd<Svd<Array> >
      *  @param withV if true, we save the right housolder transforms in V_.
      **/
     inline Svd( Array const& A, bool ref= false, bool withU= true, bool withV= true)
-              : Base(A, ref, withU, withV)
+             : Base(A, ref, withU, withV)
     {}
     /** constructor with other kind of array/expression
      *  @param A the matrix/expression to decompose.
@@ -143,7 +143,7 @@ class Svd : public ISvd<Svd<Array> >
      */
     template<class OtherArray>
     inline Svd( ArrayBase<OtherArray> const& A, bool withU = true, bool withV = true)
-              : Base(A, withU, withV) {}
+             : Base(A, withU, withV) {}
     /** Copy Constructor
      *  @param S the Svd to copy
      **/
@@ -257,7 +257,7 @@ bool Svd<Array>::computeSvd()
   F_.resize(0,0);
   U_.shift(beginRow, beginCol);
   D_.shift(beginCol);
-  V_.shift(beginCol); // U_*D_.asDiagonal()*VT_ will work
+  V_.shift(beginCol); // U_*D_.diagonalize()*VT_ will work
   return error;
 }
 
@@ -266,8 +266,8 @@ bool Svd<Array>::computeSvd()
 template<class Array>
 Real bidiag(const Array& M, ArrayDiagonalX& D, VectorX& F)
 {
-  typedef typename Array::Col ColVector;
-  typedef typename Array::Row RowVector;
+  typedef typename hidden::Traits<Array>::Col ColVector;
+  typedef typename hidden::Traits<Array>::Row RowVector;
   // norm of the matrix M
   Real norm  = 0.0;
   // compute the number of iteration

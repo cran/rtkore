@@ -39,6 +39,11 @@
 #ifndef RTKORE_H
 #define RTKORE_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 SEXP stk_version(SEXP robj);
 SEXP fastBetaRand( SEXP n, SEXP alpha, SEXP beta);
 SEXP fastBinomialRand( SEXP n, SEXP nb, SEXP prob);
@@ -59,6 +64,11 @@ SEXP fastStudentRand( SEXP n, SEXP df);
 SEXP fastUniformRand( SEXP n, SEXP a, SEXP b);
 SEXP fastUniformDiscreteRand( SEXP n, SEXP a, SEXP b);
 SEXP fastWeibullRand( SEXP n, SEXP k, SEXP lambda);
+
+#ifdef __cplusplus
+extern "C"
+}
+#endif /*__cplusplus */
 
 #endif /* RTKORE_H*/
 

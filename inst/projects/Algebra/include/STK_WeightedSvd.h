@@ -72,7 +72,7 @@ class WeightedSvd: public ISvd< WeightedSvd<Array, WRows, WCols> >
      *  @param dim the number of left and right eigenVectors required
      **/
     WeightedSvd( Array const& a, WRows const& wrows, WCols const& wcols, int dim)
-               : Base(a, false, (dim>0) ? true:false, (dim>0) ? true:false)
+              : Base(a, false, (dim>0) ? true:false, (dim>0) ? true:false)
                , wrows_(wrows), wcols_(wcols), dim_(dim)
 
     {
@@ -87,7 +87,7 @@ class WeightedSvd: public ISvd< WeightedSvd<Array, WRows, WCols> >
     /** run the weighted svd */
     virtual bool run()
     {
-      U_ = wrows_.asDiagonal() * U_ * wcols_.asDiagonal();
+      U_ = wrows_.diagonalize() * U_ * wcols_.diagonalize();
 #ifdef STKUSELAPACK
       lapack::Svd solver(U_, false, this->withU_, this->withV_);
       // if there is no cv, fall back to STK++ svd

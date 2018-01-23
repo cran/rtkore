@@ -99,27 +99,27 @@ struct JointGaussianParameters: public IMultiParameters<JointGaussianParameters>
  *
  **/
 template <class Array, class WColVector = CVectorX>
-class JointGaussianModel : public IMultiStatModel<Array, WColVector, JointGaussianParameters >
+class JointGaussianModel: public IMultiStatModel<Array, WColVector, JointGaussianParameters >
 {
   public:
     /** Type of the data contained in the container */
     typedef typename Array::Type Type;
     /** Type of the row vector of the container */
-    typedef typename Array::Row RowVector;
+    typedef typename hidden::Traits<Array>::Row RowVector;
     /** Type of the column vector of the container */
-    typedef typename Array::Col ColVector;
+    typedef typename hidden::Traits<Array>::Col ColVector;
     /** Base class */
     typedef IMultiStatModel<Array, WColVector, JointGaussianParameters > Base;
     using Base::p_data;
     using Base::p_param;
     /** default constructor. */
-    JointGaussianModel() : Base() {}
+    JointGaussianModel(): Base() {}
     /** Constructor with data set. */
-    JointGaussianModel(Array const& data) : Base(data) {}
+    JointGaussianModel(Array const& data): Base(data) {}
     /** Constructor with a ptr on the data set. */
-    JointGaussianModel(Array const* p_data) : Base(p_data) {}
+    JointGaussianModel(Array const* p_data): Base(p_data) {}
     /** Copy constructor. */
-    JointGaussianModel(JointGaussianModel const& model) : Base(model) {}
+    JointGaussianModel(JointGaussianModel const& model): Base(model) {}
     /** destructor */
     virtual ~JointGaussianModel(){}
     /** clone pattern. @return a clone of this. */

@@ -51,7 +51,7 @@ template<class SquareArray> class SymEigen;
 namespace hidden
 {
 /** @ingroup hidden
- *  Specialization for the Qr class.
+ *  Specialization for the lapack::SymEigen class.
  **
  **/
 template<class SquareArray_>
@@ -72,41 +72,41 @@ namespace lapack
  *    eigenvectors of a symmetric real matrix using the syevr Lapack routine.
  */
 template<class SquareArray>
-class SymEigen : public ISymEigen<SymEigen<SquareArray> >
+class SymEigen: public ISymEigen< SymEigen<SquareArray> >
 {
   public:
-    typedef ISymEigen<SymEigen> Base;
+    typedef ISymEigen< SymEigen<SquareArray> > Base;
     using Base::eigenValues_;
     using Base::eigenVectors_;
     using Base::range_;
     using Base::norm_;
     using Base::rank_;
     using Base::det_;
+
+    /** @brief Default Constructor */
+    SymEigen();
     /** @brief Constructor
      *  @param data reference on a symmetric square matrix
      *  @param ref @c true if we overwrite the data set, @c false otherwise
      *  @note data can be a reference if and only if it is a CSquareX
+     *  @note Default values for syevr lapack parameters are
+     *  @code
+     *  jobz_ = 'V'; RANGE_ = 'A'; UPLO_ = 'U';
+     *   VL_ = 0.0; VU_ = 0.0; IL_ = 0; IU_ = 0;
+     *  @endcode
      */
     SymEigen( SquareArray const& data, bool ref =false);
     /** @brief Constructor
      *  @param data reference on a symmetric square expression
      */
     template<class Derived>
-    SymEigen( ArrayBase<Derived> const& data)
-            : Base(data)
-            , jobz_('V'), RANGE_('A'), UPLO_('U')
-            , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
-    {}
+    SymEigen( ArrayBase<Derived> const& data);
     /** @brief copy constructor
      *  @param eigen the SymEigen to copy
      */
-    inline SymEigen( SymEigen const& eigen)
-                   : Base(eigen)
-                   , jobz_(eigen.jobz_), RANGE_(eigen.RANGE_), UPLO_(eigen.UPLO_)
-                   , VL_(eigen.VL_), VU_(eigen.VU_), IL_(eigen.IL_), IU_(eigen.IU_)
-     {}
+    SymEigen( SymEigen const& eigen);
     /** Destructor. */
-    inline virtual ~SymEigen() {}
+    virtual ~SymEigen() {}
     /** @param jobz If jobz ='N': Compute eigenvalues only; If jobz = 'V': Compute
      * eigenvalues and eigenvectors.
      **/
@@ -152,15 +152,21 @@ class SymEigen : public ISymEigen<SymEigen<SquareArray> >
 
 
 
+/* @brief Default Constructor */
+template<class SquareArray>
+SymEigen<SquareArray>::SymEigen(): Base()
+                                 , jobz_('V'), RANGE_('A'), UPLO_('U')
+                                 , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
+{}
 /* @brief Constructor
  *  @param data reference on a symmetric square matrix
  *  @param ref @c true if we overwrite the data set, @c false otherwise
  */
 template<class SquareArray>
-inline SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
-                                      : Base(data)
-                                      , jobz_('V'), RANGE_('A'), UPLO_('U')
-                                      , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
+SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
+                              : Base(data)
+                               , jobz_('V'), RANGE_('A'), UPLO_('U')
+                               , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
 {}
 /* @brief Constructor
  *  @param data reference on a symmetric square matrix
@@ -168,10 +174,27 @@ inline SymEigen<SquareArray>::SymEigen( SquareArray const& data, bool ref)
  */
 template<>
 inline SymEigen<CSquareX>::SymEigen( CSquareX const& data, bool ref)
-                                   : Base(data, ref)
+                                  : Base(data, ref)
                                    , jobz_('V'), RANGE_('A'), UPLO_('U')
                                    , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
 {}
+
+template<class SquareArray>
+template<class Derived>
+SymEigen<SquareArray>::SymEigen( ArrayBase<Derived> const& data)
+                              : Base(data)
+                               , jobz_('V'), RANGE_('A'), UPLO_('U')
+                               , VL_(0.0), VU_(0.0), IL_(0), IU_(0)
+{}
+/** @brief copy constructor
+ *  @param eigen the SymEigen to copy
+ */
+template<class SquareArray>
+SymEigen<SquareArray>::SymEigen( SymEigen const& eigen)
+                              : Base(eigen)
+                               , jobz_(eigen.jobz_), RANGE_(eigen.RANGE_), UPLO_(eigen.UPLO_)
+                               , VL_(eigen.VL_), VU_(eigen.VU_), IL_(eigen.IL_), IU_(eigen.IU_)
+ {}
 
 /* @brief Run eigen decomposition
  *  Launch SYEVR LAPACK routine to perform the eigenvalues decomposition.
@@ -194,8 +217,8 @@ bool SymEigen<SquareArray>::runImpl()
   Real absTol = 0.0; // let Lapack chose the correct tolerance
   // get optimal size necessary for work
   Real work; // work is just one place, get the optimal size for work
-  int iwork; // iwork is just on place, get the optimal size for iWork
-  int lWork =-1, liwork =-1; // workspace variable
+  // iwork is just on place, get the optimal size for iWork
+  int iwork, lWork =-1, liwork =-1; // workspace variable
 
   int info = 1;
 #ifdef STK_ALGEBRA_DEBUG
@@ -243,11 +266,10 @@ bool SymEigen<SquareArray>::runImpl()
   // finalize
   data_.shift(range_.begin());
   eigenVectors_.shift(range_.begin());
-//  stk_cout << _T("eigenValues_  (before shift) =\n") << eigenValues_ << "\n";
   eigenValues_.shift(range_.begin());
-//  stk_cout << _T("eigenValues_  (after shift) =\n") << eigenValues_ << "\n";
   this->SupportEigenVectors_.shift(range_.begin());
   this->finalizeStep();
+  this->hasRun_ = true;
   // return the result of the computation
   if (!info) return true;
   if (info>0)

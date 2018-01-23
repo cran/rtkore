@@ -51,20 +51,27 @@ namespace Kernel
  * where @e h represents the bandwidth of the kernel.
  */
 template<class Array>
-class RationalQuadratic : public IKernelBase<Array>
+class RationalQuadratic: public IKernelBase<Array>
 {
   public:
     typedef IKernelBase<Array> Base;
-    typedef typename Array::Row RowVector;
+    typedef typename Array::Type Type;
     using Base::p_data_;
     using Base::gram_;
-    using Base::symmetrize;
-    /** constructor with a constant pointer on the data set
+    using Base::hasRun_;
+
+    /** Default constructor with the width
+     *  @param shift the shift to use in the kernel
+     **/
+    RationalQuadratic( Real const& shift= 1.)
+          : Base(0), shift_(shift)
+    {}
+   /** constructor with a constant pointer on the data set
      *  @param p_data a pointer on a data set that will be "kernelized"
      *  @param shift the shift to use in the kernel
      **/
     RationalQuadratic( Array const* p_data, Real const& shift= 1.)
-                     : Base(p_data), shift_(shift)
+                    : Base(p_data), shift_(shift)
     { if (shift_ == 0.)
         STKDOMAIN_ERROR_1ARG(RationalQuadratic::RationalQuadratic,shift,shift must be!=0);
     }
@@ -73,24 +80,53 @@ class RationalQuadratic : public IKernelBase<Array>
      *  @param shift the size of the windows to use in the kernel
      **/
     RationalQuadratic( Array const& data, Real const& shift= 1.)
-                     : Base(data),shift_(shift)
+                    : Base(data),shift_(shift)
     { if (shift_ == 0.)
         STKDOMAIN_ERROR_1ARG(RationalQuadratic::RationalQuadratic,shift,shift must be!=0);
     }
+    /** constructor with an array of parameter.
+     *  @param p_data a pointer on a data set that will be "kernelized"
+     *  @param param array of parameter
+     **/
+    template<class Derived>
+    RationalQuadratic( Array const* p_data, ExprBase<Derived> const& param)
+                    : Base(p_data), shift_(param.empty() ? 1. : param.front())
+    {}
+    /** constructor with a constant pointer on the data set
+     *  @param data a reference on a data set that will be "kernelized"
+     *  @param param array of parameter
+     **/
+    template<class Derived>
+    RationalQuadratic( Array const& data, ExprBase<Derived> const& param)
+                    : Base(data), shift_(param.empty() ? 1. : param.front())
+    {}
+
     /** destructor */
     virtual ~RationalQuadratic() {}
     /** @return the shift of the kernel */
     Real const& shift() const {return shift_;}
     /** set the shift of the kernel */
-    void setWidth(Real const& shift) { shift_ = shift;}
-
-    /** compute the kernel value between two individuals
-     *  @param ind1,ind2 two individuals to compare using the kernel metric */
-    virtual Real kcomp(RowVector const& ind1, RowVector const& ind2) const;
-    /** compute the kernel between an individual and himself
-     *  @param ind the individual to evaluate using the kernel
+    void setShift(Real const& shift) { shift_ = shift;}
+    /** Set parameter using an array
+     *  @param param array of parameter
      **/
-    virtual Real kdiag(RowVector const& ind) const;
+    template<class Derived>
+    void setParam(  ExprBase<Derived> const& param)
+    { shift_ = (param.empty() ? 1. : param.front());}
+
+    /** virtual method.
+     *  @return diagonal value of the kernel for the ith individuals.
+     *  @param i index of the individual
+     **/
+    virtual inline Real diag(int i) const {return 1.;};
+    /** compute the kernel value between two individuals
+     *  @param i,j index of the two individuals to compare using the kernel metric */
+    virtual Real comp(int i, int j) const;
+    /** compute the value of the kernel for the given value
+     *  @param v value
+     *  @return the value of the kernel at v
+     **/
+    virtual Real value(Type const& v) const;
 
   private:
     /** shift of the kernel */
@@ -98,14 +134,16 @@ class RationalQuadratic : public IKernelBase<Array>
 };
 
 template<class Array>
-Real RationalQuadratic<Array>::kcomp(RowVector const& ind1, RowVector const& ind2) const
+Real RationalQuadratic<Array>::comp(int i, int j) const
 {
-  Real aux = (ind1 - ind2).norm2();
-  return 1. - aux/(aux + shift_);}
+  if (hasRun_) return gram_(i,j);
+  Real aux = (p_data_->row(i) - p_data_->row(j)).norm2();
+  return 1. - aux/(aux + shift_);
+}
 
 template<class Array>
-Real RationalQuadratic<Array>::kdiag(RowVector const& ind) const
-{ return 1.;}
+Real RationalQuadratic<Array>::value(Type const& v) const
+{ return 1- v*v/(v*v + shift_);}
 
 } // namespace Kernel
 

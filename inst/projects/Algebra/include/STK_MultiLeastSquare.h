@@ -76,7 +76,7 @@ class MultiLeastSquare: public ILeastSquare<MultiLeastSquare<ArrayB, ArrayA> >
      *  @param isBref,isAref are the left hand side and the right hand side references ?
      */
     inline MultiLeastSquare( ArrayB const& b, ArrayA const& a, bool isBref=false, bool isAref=false)
-                           : Base(b, a, isBref, isAref) {}
+                          : Base(b, a, isBref, isAref) {}
     /** Destructor */
     inline virtual ~MultiLeastSquare() {};
     /** compute the multidimensional regression */
@@ -108,14 +108,14 @@ bool MultiLeastSquare<ArrayB, ArrayA>::runImpl(Weights const& weights)
 {
   STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Weights);
   // compute a'a
-  ArraySquareX prod = a_.transpose() * weights.asDiagonal() * a_;
+  ArraySquareX prod = a_.transpose() * weights.diagonalize() * a_;
   // compute (a'a)^{-1}
   SymEigen<ArraySquareX> decomp(prod);
   decomp.run();
   rank_ = decomp.rank();
   // compute (a'a)^{-1}b'a
-  if (a_.sizeRows() < b_.sizeCols()) { x_ = (decomp.ginv(prod) * a_.transpose())  * weights.asDiagonal() * b_;}
-  else { x_ = decomp.ginv(prod) * (a_.transpose() * weights.asDiagonal() * b_);}
+  if (a_.sizeRows() < b_.sizeCols()) { x_ = (decomp.ginv(prod) * a_.transpose())  * weights.diagonalize() * b_;}
+  else { x_ = decomp.ginv(prod) * (a_.transpose() * weights.diagonalize() * b_);}
   return true;
 }
 

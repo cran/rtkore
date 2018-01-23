@@ -40,7 +40,7 @@
 namespace STK
 {
 // forward declarations
-template< typename Type, int SizeRows_ = UnknownSize, int SizeCols_ = UnknownSize, bool Orient_ = Arrays::by_col_> class CArray;
+template< typename Type, int SizeRows_, int SizeCols_, bool Orient_> class CArray;
 template< typename Type, int SizeCols_, bool Orient_> class CArrayPoint;
 template< typename Type, int SizeRows_, bool Orient_> class CArrayVector;
 template< typename Type, bool Orient_> class CArrayNumber;
@@ -124,7 +124,6 @@ struct Traits< CArray<Type_, SizeRows_, SizeCols_, Orient_> >
     typedef CAllocator<Type_, SizeRows_, SizeCols_, Orient_> Allocator;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type_>::Type const& ReturnType;
     typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
     enum
@@ -151,7 +150,7 @@ class CArray: public ICArray < CArray<Type_, SizeRows_, SizeCols_, Orient_> >
     typedef ArrayBase < CArray<Type_, SizeRows_, SizeCols_, Orient_> > LowBase;
 
     typedef typename hidden::Traits<CArray<Type_, SizeRows_, SizeCols_, Orient_> >::Type Type;
-    typedef typename hidden::Traits<CArray<Type_, SizeRows_, SizeCols_, Orient_> >::ReturnType ReturnType;
+    typedef typename hidden::Traits<CArray<Type_, SizeRows_, SizeCols_, Orient_> >::ConstReturnType ConstReturnType;
 
     enum
     {
@@ -163,7 +162,7 @@ class CArray: public ICArray < CArray<Type_, SizeRows_, SizeCols_, Orient_> >
     };
 
     /** Default constructor. */
-    CArray() : Base() {}
+    CArray(): Base() {}
     /** constructor with specified dimension.
      *  @param sizeRows, sizeCols size of the rows and columns
      **/
@@ -178,7 +177,7 @@ class CArray: public ICArray < CArray<Type_, SizeRows_, SizeCols_, Orient_> >
      *  @param v initial value of the container
      **/
     CArray( int sizeRows, int sizeCols, Type const& v)
-                 : Base(sizeRows, sizeCols, v)
+                : Base(sizeRows, sizeCols, v)
     {}
     /** constructor with specified ranges, initialization with a constant.
      *  @param rows, cols range of the rows and columns
@@ -197,7 +196,7 @@ class CArray: public ICArray < CArray<Type_, SizeRows_, SizeCols_, Orient_> >
      **/
     template<class OtherArray>
     CArray( ICArray<OtherArray> const& T, Range const& I, Range const& J)
-           : Base(T.allocator(), I, J) {}
+          : Base(T.allocator(), I, J) {}
     /** wrapper constructor for 0 based C-Array.
      *  @param q pointer on the array
      *  @param sizeRows, sizeCols size of the rows and columns

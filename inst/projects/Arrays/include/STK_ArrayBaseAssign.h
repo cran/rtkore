@@ -29,559 +29,48 @@
  **/
 
 /** @file STK_ArrayBaseAssign.h
- *  @brief In this file we implement the copy and assign methods used when
- *  copying an array or an expression in an other array.
+ *  @brief In this file we implement the copy and assign methods
  **/
 
 
 #ifndef STK_ARRAYBASEASSIGN_H
 #define STK_ARRAYBASEASSIGN_H
 
+#include "assign/STK_AssignSelector.h"
+
 // this macro will be true if the assignation is correct and false otherwise
-#define CORRECT_ASSIGN(dst,src) \
-( (  ( dst==Arrays::array2D_  || dst==Arrays::square_) \
+#define IS_VALID_ASSIGN(lhs,rhs) \
+( (  ( lhs==Arrays::array2D_  || lhs==Arrays::square_) \
      && \
-     ( src==Arrays::array2D_           || src==Arrays::square_  \
-     || src==Arrays::diagonal_         || src==Arrays::number_ \
-     || src==Arrays::lower_triangular_ || src==Arrays::upper_triangular_) \
+     ( rhs==Arrays::array2D_           || rhs==Arrays::square_  \
+     || rhs==Arrays::diagonal_         || rhs==Arrays::number_ \
+     || rhs==Arrays::lower_triangular_ || rhs==Arrays::upper_triangular_ \
+     || rhs==Arrays::lower_symmetric_  || rhs==Arrays::upper_symmetric_ \
+     || rhs==Arrays::symmetric_ \
+     ) \
   )  \
   || \
-  (  ( dst==Arrays::array2D_) \
+  (  ( lhs==Arrays::array2D_) \
      && \
-     (src==Arrays::vector_ || src==Arrays::point_|| src==Arrays::number_) \
+     (rhs==Arrays::vector_ || rhs==Arrays::point_|| rhs==Arrays::number_) \
   )  \
   || \
-  ( dst==Arrays::lower_triangular_ && src==Arrays::lower_triangular_) \
+  ( lhs==Arrays::lower_triangular_ && rhs==Arrays::lower_triangular_) \
   || \
-  ( dst==Arrays::upper_triangular_ && src==Arrays::upper_triangular_) \
+  ( lhs==Arrays::upper_triangular_ && rhs==Arrays::upper_triangular_) \
   || \
-  ( ( dst==Arrays::diagonal_ || dst==Arrays::vector_ || dst==Arrays::point_) \
+  ( ( lhs==Arrays::diagonal_ || lhs==Arrays::vector_ || lhs==Arrays::point_) \
     && \
-    (src==Arrays::diagonal_ || src==Arrays::vector_ || src==Arrays::point_) \
+    (rhs==Arrays::diagonal_ || rhs==Arrays::vector_ || rhs==Arrays::point_) \
   ) \
   || \
-  ( dst==Arrays::number_ && src==Arrays::number_) \
+  ( lhs==Arrays::number_ && rhs==Arrays::number_) \
 )
 
 namespace STK
 {
 
-
-namespace hidden
-{
-/** @ingroup hidden
- *  @brief Copycat to use at compile time.
- *  If n is the number of structures, there is potentially n^2 ways to
- *  copy rhs inside lhs.
- *  */
-template < typename Derived, typename Rhs, int TStructure_, int RhsStructure_>
-struct Copycat;
-
-//---------------------GENERAL----------------------------------
-// general <- general
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::array2D_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-      for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-};
-
-// general <- square
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::square_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    for (int i = rhs.begin(); i< rhs.end(); ++i)
-      for (int j = rhs.begin(); j < rhs.end(); ++j)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    for (int j = rhs.begin(); j < rhs.lend(); ++j)
-      for (int i = rhs.begin(); i< rhs.end(); ++i)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-};
-
-// general <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::diagonal_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    lhs.setValue(Type(0));
-    for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i,i) = rhs.elt(i);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    lhs.setValue(Type(0));
-    for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i,i) = rhs.elt(i);}
-  }
-};
-
-// general <- lower_triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_,   Arrays::lower_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-    { int i = rhs.beginRows();
-      for (; i < j; ++i)             { lhs.elt(i,j) = Type(0);}
-      for (; i < rhs.endRows(); ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int j= end; j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i) { lhs.elt(i,j) = Type(0);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i)
-    { int j = rhs.beginCols();
-      for (; j <=i; ++j)             { lhs.elt(i,j) = rhs.elt(i, j);}
-      for (; j < rhs.endCols(); ++j) { lhs.elt(i,j) = Type(0);}
-    }
-    for (int i= end; i < rhs.endRows(); ++i)
-      for (int j=rhs.beginCols(); j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-};
-
-// general <- upper_triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::upper_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-    { int i = rhs.beginRows();
-      for (; i <= j; ++i)            { lhs.elt(i,j) = rhs.elt(i, j);}
-      for (; i < rhs.endRows(); ++i) { lhs.elt(i,j) =  Type(0);}
-    }
-    for (int j= end; j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(lhs.endRows(), lhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i)
-    { int j = rhs.beginCols();
-      for (; j <i; ++j)               { lhs.elt(i,j) = Type(0);}
-      for (; j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int i= end; i < rhs.endRows(); ++i)
-      for (int j=rhs.beginCols(); j < rhs.endCols(); ++j) { lhs.elt(i,j) = Type(0);}
-  }
-};
-
-// general <- vector
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::vector_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    int j = rhs.beginCols();
-    for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-    { lhs.elt(i, j) = rhs.elt(i);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    int j = rhs.beginCols();
-    for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-    { lhs.elt(i, j) = rhs.elt(i);}
-  }
-};
-
-// general <- point
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::array2D_, Arrays::point_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    int i = rhs.beginRows();
-    for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-    { lhs.elt(i, j) = rhs.elt(j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    int i = rhs.beginRows();
-    for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-    { lhs.elt(i, j) = rhs.elt(j);}
-  }
-};
-
-//---------------------SQUARE----------------------------------
-// square <- general
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::square_, Arrays::array2D_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-      for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    for (int j = rhs.beginCols(); j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-};
-
-// square <- square
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::square_, Arrays::square_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    for (int j = rhs.begin(); j < rhs.end(); ++j)
-      for (int i = rhs.begin(); i< rhs.end(); ++i)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    for (int i = rhs.begin(); i< rhs.end(); ++i)
-      for (int j = rhs.begin(); j < rhs.end(); ++j)
-      { lhs.elt(i, j) = rhs.elt(i, j);}
-  }
-};
-
-// square <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::square_, Arrays::diagonal_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    lhs.setValue(Type(0));
-    const int end = std::min(lhs.endRows(), lhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i) { lhs.elt(i,i) = rhs.elt(i);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    lhs.setValue(Type(0));
-    const int end = std::min(lhs.endRows(), lhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i) { lhs.elt(i,i) = rhs.elt(i);}
-  }
-};
-
-// square_ <- lower_triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::square_,   Arrays::lower_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-    { int i = rhs.beginRows();
-      for (; i < j; ++i)                 { lhs.elt(i,j) = Type(0);}
-      for (; i < rhs.endRows(); ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int j= end; j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i) { lhs.elt(i,j) = Type(0);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i)
-    { int j = rhs.beginCols();
-      for (; j <=i; ++j)                 { lhs.elt(i,j) = rhs.elt(i, j);}
-      for (; j < rhs.endCols(); ++j) { lhs.elt(i,j) = Type(0);}
-    }
-    for (int i= end; i < rhs.endRows(); ++i)
-      for (int j=rhs.beginCols(); j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-};
-
-// square_ <- upper triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::square_, Arrays::upper_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-    { int i = rhs.beginRows();
-      for (; i <= j; ++i)            { lhs.elt(i,j) = rhs.elt(i, j);}
-      for (; i < rhs.endRows(); ++i) { lhs.elt(i,j) =  Type(0);}
-    }
-    for (int j= end; j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(lhs.endRows(), lhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i)
-    { int j = rhs.beginCols();
-      for (; j <i; ++j)                  { lhs.elt(i,j) = Type(0);}
-      for (; j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int i= end; i < rhs.endRows(); ++i)
-      for (int j=rhs.beginCols(); j < rhs.endCols(); ++j) { lhs.elt(i,j) = Type(0);}
-  }
-};
-
-//---------------------LDO----------------------------------
-// lower_triangular <- lower_triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::lower_triangular_, Arrays::lower_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-      for (int i=j; i < rhs.endRows(); ++i)
-      { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int i = rhs.beginRows(); i < end; ++i)
-    {
-      for (int j = rhs.beginCols(); j <=i; ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int i= end; i < rhs.endRows(); ++i)
-      for (int j=rhs.beginCols(); j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-};
-
-//---------------------LUP----------------------------------
-// upper_triangular <- upper_triangular
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::upper_triangular_, Arrays::upper_triangular_>
-{
-  typedef typename hidden::Traits<Derived>::Type Type;
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  {
-    const int end = std::min(rhs.endRows(), rhs.endCols());
-    for (int j = rhs.beginCols(); j < end; ++j)
-    {
-      for (int i = rhs.beginRows(); i <= j; ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-    }
-    for (int j= end; j < rhs.endCols(); ++j)
-      for (int i = rhs.beginRows(); i < rhs.endRows(); ++i) { lhs.elt(i,j) = rhs.elt(i, j);}
-  }
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  {
-    const int last = std::min(lhs.lastIdxRows(), lhs.lastIdxCols());
-    for (int i = rhs.beginRows(); i <= last; ++i)
-    { for (int j=i; j < rhs.endCols(); ++j) { lhs.elt(i,j) = rhs.elt(i, j);}}
-  }
-};
-
-
-//---------------------DIAGONAL----------------------------------
-// diagonal <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::diagonal_, Arrays::diagonal_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-// diagonal <- vector
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::diagonal_, Arrays::vector_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-// diagonal <- point
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::diagonal_, Arrays::point_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-//---------------------VECTOR----------------------------------
-//  vector <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::vector_, Arrays::diagonal_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-//  vector <- vector
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::vector_, Arrays::vector_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-// vector <- point
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::vector_, Arrays::point_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-//---------------------POINT----------------------------------
-//  point_ <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::point_, Arrays::diagonal_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-//  vector <- vector
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::point_, Arrays::vector_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-// vector <- point
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::point_, Arrays::point_>
-{
-  static void runByCol(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-  static void runByRow(Derived& lhs, Rhs const& rhs )
-  { for (int i = rhs.begin(); i< rhs.end(); ++i) { lhs.elt(i) = rhs.elt(i);}}
-};
-
-
-//---------------------NUMBER----------------------------------
-//  point_ <- diagonal
-template < typename Derived, typename Rhs>
-struct Copycat<  Derived,  Rhs, Arrays::number_, Arrays::number_>
-{
-  inline static void runByCol(Derived& lhs, Rhs const& rhs )
-  { lhs.elt() = rhs.elt();}
-  inline static void runByRow(Derived& lhs, Rhs const& rhs )
-  { lhs.elt() = rhs.elt();}
-};
-
-} // namespace hidden
-
-
-namespace hidden
-{
-
-/** @ingroup hidden
- * utility class that select if the copy will be by row or by column
- **/
-template < typename Derived, typename Rhs, int TOrient_>
-struct CopycatSelector;
-
-/** specialization for column oriented arrrays */
-template< typename Derived, typename Rhs>
-struct CopycatSelector< Derived, Rhs, Arrays::by_col_>
-{
-  enum
-  { tstructure_ = hidden::Traits<Derived>::structure_
-  , sstructure_ = hidden::Traits<Rhs>::structure_
-  };
-  inline static void run(Derived& lhs, Rhs const& rhs )
-  { Copycat<Derived, Rhs, tstructure_, sstructure_>::runByCol(lhs, rhs );}
-};
-
-/** specialization for row oriented arrrays */
-template< typename Derived, typename Rhs>
-struct CopycatSelector< Derived, Rhs, Arrays::by_row_>
-{
-  enum
-  { tstructure_ = hidden::Traits<Derived>::structure_
-  , sstructure_ = hidden::Traits<Rhs>::structure_
-  };
-  inline static void run(Derived& lhs, Rhs const& rhs )
-  { Copycat<Derived, Rhs, tstructure_, sstructure_>::runByRow(lhs, rhs );}
-};
-
-/** @ingroup hidden
- * utility class that select the resize method to call
- **/
-template< typename Lhs, typename Rhs, int TStructure_>
-struct resizeSelector;
-
-/** 2D general case */
-template< typename Lhs, typename Rhs, int TStructure_>
-struct resizeSelector
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { dst.resize(src.rows(), src.cols());}
-};
-/** specialization for the square_ case */
-template< typename Lhs, typename Rhs>
-struct resizeSelector<Lhs, Rhs, Arrays::square_>
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { dst.resize(src.range());}
-};
-/** specialization for the diagonal_ case */
-template< typename Lhs, typename Rhs>
-struct resizeSelector<Lhs, Rhs, Arrays::diagonal_>
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { dst.resize(src.range());}
-};
-/** specialization for the vector_ case */
-template< typename Lhs, typename Rhs>
-struct resizeSelector<Lhs, Rhs, Arrays::vector_>
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { dst.resize(src.range());}
-};
-/** specialization for the point_ case */
-template< typename Lhs, typename Rhs>
-struct resizeSelector<Lhs, Rhs, Arrays::point_>
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { dst.resize(src.range());}
-};
-
-/** specialization for the number_ case */
-template< typename Lhs, typename Rhs>
-struct resizeSelector<Lhs, Rhs, Arrays::number_>
-{
-  inline static void run(Lhs& dst, ExprBase<Rhs> const& src )
-  { /* nothing to do */;}
-};
-
-}  // namespace hidden
-
-/* @brief assign src to this
- **/
+/* @brief assign rhs to this **/
 template<class Derived>
 template<class Rhs>
 inline Derived& ArrayBase<Derived>::assign(ExprBase<Rhs> const& rhs)
@@ -592,32 +81,53 @@ inline Derived& ArrayBase<Derived>::assign(ExprBase<Rhs> const& rhs)
   , rhs_orient_    = hidden::Traits<Rhs>::orient_
   , rhs_sizeRows_  = hidden::Traits<Rhs>::sizeRows_
   , rhs_sizeCols_  = hidden::Traits<Rhs>::sizeCols_
+  , is_valid_ = IS_VALID_ASSIGN((Arrays::Structure)structure_, (Arrays::Structure)rhs_structure_)
   };
-  STK_STATIC_ASSERT(CORRECT_ASSIGN((Arrays::Structure)structure_, (Arrays::Structure)rhs_structure_),YOU_TRIED_TO_ASSIGN_A_NOT_COMPATIBLE_ARRAY);
+  STK_STATIC_ASSERT(is_valid_,YOU_TRIED_TO_ASSIGN_A_NOT_COMPATIBLE_ARRAY);
   // check if assignment is possible
-  if (!hidden::CheckAssign<Derived, structure_, rhs_structure_>::isAllowed(this->asDerived(), rhs.rows(), rhs.cols()))
+  if (structure_ == int(Arrays::square_) && rhs.cols() != rhs.rows() )
   { STKRUNTIME_ERROR_2ARG(ArrayBase::assign,Arrays::structureToString((Arrays::Structure)structure_),Arrays::structureToString((Arrays::Structure)rhs_structure_),is not permited);}
-  // choose the correct way to resize if necessary
+  // choose the correct way to resize this if necessary
   hidden::resizeSelector<Derived, Rhs, rhs_structure_>::run(this->asDerived(), rhs.asDerived());
   // choose the correct way to copy
-  hidden::CopycatSelector<Derived, Rhs,  orient_>::run(this->asDerived(), rhs.asDerived());
+  hidden::CopycatSelector<Derived, Rhs,  rhs_orient_>::run(this->asDerived(), rhs.asDerived());
   return this->asDerived();
 }
 
-/* Adding a Rhs to this. */
+/* @return the matrix or vector obtained by setting this constant*/
+template<class Derived>
+inline Derived& ArrayBase<Derived>::operator=( Type const& value) { return setValue(value);}
+/* @return the matrix or vector obtained by evaluating this expression */
+template<class Derived>
+inline Derived& ArrayBase<Derived>::operator=( Derived const& rhs) { return assign(rhs);}
+/* @return the matrix or vector obtained by evaluating this expression */
+template<class Derived>
+template<typename Rhs>
+inline Derived& ArrayBase<Derived>::operator=( ExprBase<Rhs> const& rhs)
+{ return assign(rhs.asDerived());}
+
+//------------------------------------------------
+// Rhs array
 template<class Derived>
 template<typename Rhs>
 inline Derived&  ArrayBase<Derived>::operator+=( ExprBase<Rhs> const& rhs)
 {
-  this->asDerived() = this->asDerived() + rhs;
+  enum { orient_     = hidden::Traits<Derived>::orient_
+       , RStructure_ = hidden::Traits<Rhs>::structure_
+       };
+  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::sumOp_>::Result Res;
+  hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() + rhs.asDerived());
   return this->asDerived();
 }
-/* subtract a Rhs to this. */
 template<class Derived>
 template<typename Rhs>
 inline Derived&  ArrayBase<Derived>::operator-=( ExprBase<Rhs> const& rhs)
 {
-  this->asDerived() = this->asDerived() - rhs;
+    enum { orient_     = hidden::Traits<Derived>::orient_
+         , RStructure_ = hidden::Traits<Rhs>::structure_
+         };
+  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::differenceOp_>::Result Res;
+  hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() - rhs.asDerived());
   return this->asDerived();
 }
 
@@ -625,49 +135,106 @@ template<class Derived>
 template<typename Rhs>
 inline Derived&  ArrayBase<Derived>::operator/=( ExprBase<Rhs> const& rhs)
 {
-  this->asDerived() = this->asDerived() / rhs;
+    enum { orient_     = hidden::Traits<Derived>::orient_
+         , RStructure_ = hidden::Traits<Rhs>::structure_
+         };
+  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::divisionOp_>::Result Res;
+  hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() / rhs.asDerived());
   return this->asDerived();
 }
-/* mult a Rhs to this. */
+// TODO: implement direct call to CopyCat
 template<class Derived>
 template<typename Rhs>
 inline Derived&  ArrayBase<Derived>::operator*=( ExprBase<Rhs> const& rhs)
 {
-  this->asDerived() = this->asDerived() * rhs;
+    enum { orient_     = hidden::Traits<Derived>::orient_
+         , RStructure_ = hidden::Traits<Rhs>::structure_
+         };
+  //typedef typename ProductProductType<Derived, Rhs>::ProductType Res;
+//  typedef BinaryOperator< ProductOp<Type, typename hidden::Traits<Rhs>::Type>, Derived, Rhs> Res;
+//  hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() * rhs.asDerived());
+  this->asDerived() = this->asDerived() * rhs.asDerived();
   return this->asDerived();
 }
 
-/* Adding a constant to this. */
+template<class Derived>
+template<typename Rhs>
+inline Derived&  ArrayBase<Derived>::operator%=( ExprBase<Rhs> const& rhs)
+{
+    enum { orient_     = hidden::Traits<Derived>::orient_
+         , RStructure_ = hidden::Traits<Rhs>::structure_
+         };
+  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::moduloOp_>::Result Res;
+  hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() % rhs.asDerived());
+  return this->asDerived();
+}
+
+//------------------------------------------------
+// rhs value
 template<class Derived>
 inline Derived& ArrayBase<Derived>::operator+=( Type const& value)
 {
-  this->asDerived() = this->asDerived() + value;
+  enum { orient_ = hidden::Traits<Derived>::orient_};
+  typedef UnaryOperator<SumWithOp<Type>, Derived> Rhs;
+  hidden::CopycatSelector<Derived, Rhs, orient_>::run(this->asDerived(), this->asDerived() + value);
   return this->asDerived();
 }
-/* Substract a constant to this. */
 template<class Derived>
 inline Derived& ArrayBase<Derived>::operator-=( Type const& value)
 {
-  this->asDerived() = this->asDerived() - value;
+  enum { orient_ = hidden::Traits<Derived>::orient_};
+  typedef UnaryOperator<SumWithOp<Type>, Derived> Rhs;
+  hidden::CopycatSelector<Derived, Rhs, orient_>::run(this->asDerived(), this->asDerived() + (-value));
   return this->asDerived();
 }
-/* product of this by a constant. */
 template<class Derived>
 inline Derived& ArrayBase<Derived>::operator*=( Type const& value)
 {
-  this->asDerived() = this->asDerived() * value;
+  enum { orient_ = hidden::Traits<Derived>::orient_};
+  typedef UnaryOperator<ProductWithOp<Type>, Derived> Rhs;
+  hidden::CopycatSelector<Derived, Rhs, orient_>::run(this->asDerived(), this->asDerived() * value);
   return this->asDerived();
 }
-/* dividing this by a constant. */
 template<class Derived>
 inline Derived& ArrayBase<Derived>::operator/=( Type const& value)
 {
-  this->asDerived() = this->asDerived() / value;
+  enum { orient_ = hidden::Traits<Derived>::orient_};
+  typedef UnaryOperator<DivisionWithOp<Type>, Derived> Rhs;
+  hidden::CopycatSelector<Derived, Rhs, orient_>::run(this->asDerived(), this->asDerived() / value);
+  return this->asDerived();
+}
+template<class Derived>
+inline Derived& ArrayBase<Derived>::operator%=( Type const& value)
+{
+  enum { orient_ = hidden::Traits<Derived>::orient_};
+  typedef UnaryOperator<ModuloWithOp<Type>, Derived> Rhs;
+  hidden::CopycatSelector<Derived, Rhs, orient_>::run(this->asDerived(), this->asDerived() % value);
+  return this->asDerived();
+}
+
+/* overwrite @c this with @c rhs.
+ *  @note this method does not take care of the possibility of overlapping
+ *  @param rhs the array to copy
+ **/
+template<class Derived>
+template<class Rhs>
+inline Derived& ArrayBase<Derived>::copy( ExprBase<Rhs> const& rhs)
+{
+  // check
+  if (this->sizeRows() != rhs.sizeRows())
+  { STKRUNTIME_ERROR_2ARG(ArrayBase<Derived>::copy,this->sizeRows(), rhs.sizeRows(),sizeRows are not the sames);}
+  if (this->sizeCols() != rhs.sizeCols())
+  { STKRUNTIME_ERROR_2ARG(ArrayBase<Derived>::copy,this->sizeCols(), rhs.sizeCols(),sizeCols are not the sames);}
+  // copy
+  for ( int jRhs=rhs.beginCols(), jLhs=this->beginCols(); jRhs<rhs.endCols(); jLhs++, jRhs++)
+    for ( int iRhs=rhs.beginRows(), iLhs=this->beginRows(); iRhs<rhs.endRows(); iLhs++, iRhs++)
+  { this->elt(iLhs, jLhs) = rhs(iRhs, jRhs);}
+  // return this
   return this->asDerived();
 }
 
 } // namespace STK
 
-#undef CORRECT_ASSIGN
+#undef IS_VALID_ASSIGN
 
 #endif /* STK_ARRAYBASEASSIGN_H */

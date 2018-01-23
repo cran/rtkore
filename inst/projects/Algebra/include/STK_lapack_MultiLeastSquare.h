@@ -100,14 +100,14 @@ class MultiLeastSquare: public ILeastSquare< MultiLeastSquare<ArrayB, ArrayA> >
      *  @param isBref,isAref are the left hand side and the right hand side references ?
      */
     MultiLeastSquare( ArrayB const& b, ArrayA const& a, bool isBref=false, bool isAref=false)
-                    : Base(b, a, isBref, isAref), rcond_(-1) {};
+                   : Base(b, a, isBref, isAref), rcond_(-1) {};
     /** @brief template constructor
      *  @param b,a the left hand side and the right hand side of the least square
      *  problem.
      */
     template<class ArrayB_, class ArrayA_>
     MultiLeastSquare( ExprBase<ArrayB_> const& b, ExprBase<ArrayA_> const& a)
-                    : Base(b, a), rcond_(-1) {}
+                   : Base(b, a), rcond_(-1) {}
     /** Destructor */
     virtual ~MultiLeastSquare() {};
     /** @return the condition number */
@@ -165,8 +165,8 @@ bool MultiLeastSquare<ArrayB, ArrayA>::runImpl(Weights const& w)
   STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Weights);
   Range brows = (b_.sizeRows()< a_.sizeCols()) ? a_.cols() : b_.rows();
   // local arrays, b is resized if necessary
-  CArrayXX a(w.sqrt().asDiagonal() * a_), b(brows, b_.cols());
-  b.sub(b_.rows(), b_.cols()) = w.sqrt().asDiagonal() * b_;
+  CArrayXX a(w.sqrt().diagonalize() * a_), b(brows, b_.cols());
+  b.sub(b_.rows(), b_.cols()) = w.sqrt().diagonalize() * b_;
   // start
   return computeLS(b,a);
 }
