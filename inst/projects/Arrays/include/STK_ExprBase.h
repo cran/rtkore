@@ -116,30 +116,6 @@ class ExprBase: public ITContainer<Derived, hidden::Traits<Derived>::structure_>
     inline ~ExprBase() {}
 
   public:
-    /** @return safely a constant value of the element (i,j) of the 2D container.
-      *  @param i,j row and column indexes
-      **/
-     inline ConstReturnType operator()(int i, int j) const
-     {
- #ifdef STK_BOUNDS_CHECK
-       if (this->beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginRows() > i);}
-       if (this->endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endRows() <= i);}
-       if (this->beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginCols() > j);}
-       if (this->endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endCols() <= j);}
- #endif
-       return this->elt(i,j);
-     }
-     /** @return reference on the ith element
-      *  @param i index of the ith element
-      **/
-     inline ConstReturnType operator[](int i) const
-     {
-       STK_STATIC_ASSERT_ONE_DIMENSION_ONLY(Derived);
-       return this->elt(i);
-     }
-     /** @return reference on the value */
-     inline ConstReturnType operator()() const { return this->elt();}
-
     //--------------
     // Start Visitors
     /** @brief Visit the container using a constant visitor
@@ -461,9 +437,9 @@ class ExprBase: public ITContainer<Derived, hidden::Traits<Derived>::structure_>
     operator+(Type const& value, ExprBase<Derived> const& other)
     { return other.asDerived() + value;}
     /** @return an expression of value - this */
-    inline friend UnaryOperator<SumWithOp<Type>, Derived > const
+    inline friend UnaryOperator<SubstractToOp<Type>, Derived > const
     operator-(Type const value, ExprBase<Derived> const& other)
-    { return UnaryOperator<SumWithOp<Type>, Derived>(other.asDerived(), SumWithOp<Type>(-value));}
+    { return UnaryOperator<SubstractToOp<Type>, Derived>(other.asDerived(), SubstractToOp<Type>(value));}
     /** @return an expression of value * this */
     inline friend UnaryOperator< ProductWithOp<Type>, Derived> const
     operator*(Type const value, ExprBase<Derived> const& other)
@@ -555,7 +531,7 @@ class ExprBase: public ITContainer<Derived, hidden::Traits<Derived>::structure_>
 
 } // namespace STK
 
-//#undef MAKE_BINARY_OPERATOR
+#undef DEFINE_BINARY_OPERATOR
 #undef MAKE_UNARY_OPERATOR_NOARG
 #undef MAKE_UNARY_OPERATOR_1ARG
 #undef MAKE_RESHAPE_OPERATOR
