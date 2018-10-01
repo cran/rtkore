@@ -52,37 +52,46 @@ template< typename Type_, int SizeRows_ = UnknownSize, int SizeCols_ = UnknownSi
 template< typename Type_, int SizeRows_ = UnknownSize, int SizeCols_ = UnknownSize> class UpperTriangular;
 template< typename Type_, int SizeRows_ = UnknownSize, int SizeCols_ = UnknownSize> class LowerTriangular;
 
-typedef Vector<Real, UnknownSize> VectorX;
-typedef Vector<Real, 3> Vector3;
-typedef Vector<Real, 2> Vector2;
+typedef Vector<Real, UnknownSize>   VectorX;
+typedef Vector<Real, 3>             Vector3;
+typedef Vector<Real, 2>             Vector2;
 typedef Vector<double, UnknownSize> VectorXd;
-typedef Vector<double, 3> Vector3d;
-typedef Vector<double, 2> Vector2d;
-typedef Vector<int, UnknownSize> VectorXi;
-typedef Vector<int, 3> Vector3i;
-typedef Vector<int, 2> Vector2i;
+typedef Vector<double, 3>           Vector3d;
+typedef Vector<double, 2>           Vector2d;
+typedef Vector<int, UnknownSize>    VectorXi;
+typedef Vector<int, 3>              Vector3i;
+typedef Vector<int, 2>              Vector2i;
 
-typedef Point<Real, UnknownSize> PointX;
-typedef Point<Real, 3> ConstPoint3;
-typedef Point<Real, 2> ConstPoint2;
-typedef Point<double, UnknownSize> PointXd;
-typedef Point<double, 3> ConstPoint3d;
-typedef Point<double, 2> ConstPoint2d;
-typedef Point<int, UnknownSize> PointXi;
-typedef Point<int, 3> ConstPoint3i;
-typedef Point<int, 2> ConstPoint2i;
+typedef Vector<Real, UnknownSize>   ConstVectorX;
+typedef Vector<Real, 3>             ConstVector3;
+typedef Vector<Real, 2>             ConstVector2;
+typedef Vector<double, UnknownSize> ConstVectorXd;
+typedef Vector<double, 3>           ConstVector3d;
+typedef Vector<double, 2>           ConstVector2d;
+typedef Vector<int, UnknownSize>    ConstVectorXi;
+typedef Vector<int, 3>              ConstVector3i;
+typedef Vector<int, 2>              ConstVector2i;
 
-typedef Point<Real, UnknownSize> PointX;
-typedef Point<Real, 3> ConstPoint3;
-typedef Point<Real, 2> ConstPoint2;
+typedef Point<Real, UnknownSize>   PointX;
+typedef Point<Real, 3>             Point3;
+typedef Point<Real, 2>             Point2;
 typedef Point<double, UnknownSize> PointXd;
-typedef Point<double, 3> ConstPoint3d;
-typedef Point<double, 2> ConstPoint2d;
-typedef Point<int, UnknownSize> PointXi;
-typedef Point<int, 3> ConstPoint3i;
-typedef Point<int, 2> ConstPoint2i;
+typedef Point<double, 3>           Point3d;
+typedef Point<double, 2>           Point2d;
+typedef Point<int, UnknownSize>    PointXi;
+typedef Point<int, 3>              Point3i;
+typedef Point<int, 2>              Point2i;
+
+typedef Point<Real, UnknownSize>   ConstPointX;
+typedef Point<Real, 3>             ConstPoint3;
+typedef Point<Real, 2>             ConstPoint2;
+typedef Point<double, UnknownSize> ConstPointXd;
+typedef Point<double, 3>           ConstPoint3d;
+typedef Point<double, 2>           ConstPoint2d;
+typedef Point<int, UnknownSize>    ConstPointXi;
+typedef Point<int, 3>              ConstPoint3i;
+typedef Point<int, 2>              ConstPoint2i;
 }
-
 
 namespace hidden
 {
@@ -97,6 +106,7 @@ struct Traits< Const::Identity <Type_, Size_> >
     structure_ = Arrays::diagonal_,
     sizeRows_  = Size_,
     sizeCols_  = Size_,
+    size_      = Size_,
     orient_    = Arrays::by_col_,
     storage_   = Arrays::sparse_
   };
@@ -115,6 +125,7 @@ struct Traits< Const::Vector <Type_, Size_> >
     structure_ = Arrays::vector_,
     sizeRows_  = Size_,
     sizeCols_  = 1,
+    size_      = Size_,
     orient_    = Arrays::by_col_,
     storage_   = Arrays::sparse_
   };
@@ -132,6 +143,7 @@ struct Traits< Const::Point <Type_, Size_> >
     structure_ = Arrays::point_,
     sizeRows_  = 1,
     sizeCols_  = Size_,
+    size_      = Size_,
     orient_    = Arrays::by_row_,
     storage_   = Arrays::sparse_
   };
@@ -149,6 +161,7 @@ struct Traits< Const::Square <Type_, Size_> >
     structure_ = Arrays::square_,
     sizeRows_  = Size_,
     sizeCols_  = Size_,
+    size_      = Size_,
     orient_    = Arrays::by_col_,
     storage_   = Arrays::sparse_
   };
@@ -318,7 +331,7 @@ class Identity: public IConstArray<Identity<Type_, Size_> >
      **/
     inline ConstReturnType elt2Impl(int i, int j) const { return (i==j ? Type(1) : Type(0));}
     /** @return the element ith element of the identity matrix
-     *  @param i index of the ith element
+     *  @param i index of the element to get
      **/
     inline ConstReturnType elt1Impl(int i) const { return Type(1);}
 };

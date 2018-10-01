@@ -162,9 +162,13 @@ class ITContainerBase: public IRecursiveTemplate<Derived>, hidden::NoAssignOpera
     /** @return the index of the last row */
     inline int lastIdxRows() const { return endRows()-1;}
 
-    /** @return the range of the effectively stored elements in the column. */
+    /** @return the range of the effectively stored elements in the column.
+     * (default implementation)
+     **/
     inline RowRange const& rangeRowsInCol(int) const { return rows();}
-    /** @return the range of the effectively stored elements in the row. */
+    /** @return the range of the effectively stored elements in the row.
+     *  (default implementation)
+     **/
     inline ColRange const& rangeColsInRow(int) const { return cols();}
 
     /** @return @c true if the container is empty, @c false otherwise */
@@ -180,15 +184,15 @@ class ITContainerBase: public IRecursiveTemplate<Derived>, hidden::NoAssignOpera
     inline ConstReturnType elt(int i, int j) const
     {
 #ifdef STK_BOUNDS_CHECK
-      if (this->beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginRows() > i);}
-      if (this->endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endRows() <= i);}
-      if (this->beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginCols() > j);}
-      if (this->endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endCols() <= j);}
+      if (beginRows() > i) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginRows() > i);}
+      if (endRows() <= i)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endRows() <= i);}
+      if (beginCols() > j) { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, beginCols() > j);}
+      if (endCols() <= j)  { STKOUT_OF_RANGE_2ARG(ITContainerBase::elt, i, j, endCols() <= j);}
 #endif
       return this->asDerived().elt2Impl(i,j);
     }
     /** @return the constant ith element
-     *  @param i index of the ith element
+     *  @param i index of the element to get
      **/
     inline ConstReturnType elt(int i) const
     {
@@ -271,7 +275,7 @@ return this->asDerived().elt1Impl(i);
       if (this->asDerived().end() <= i)  { STKOUT_OF_RANGE_1ARG(ITContainerBase::at, i, end() <= i);}
       return this->asDerived().elt1Impl(i);
     }
-   // overloaded operators
+    // overloaded operators
     /** @return safely a constant value of the element (i,j) of the 2D container.
       *  @param i,j row and column indexes
       **/
@@ -299,7 +303,7 @@ return this->asDerived().elt1Impl(i);
        return this->asDerived().elt2Impl(i,j);
      }
      /** @return reference on the ith element
-      *  @param i index of the ith element
+      *  @param i index of the element to get
       **/
      inline ConstReturnType operator[](int i) const
      {
@@ -311,7 +315,7 @@ return this->asDerived().elt1Impl(i);
        return this->elt(i);
      }
      /** @return reference on the ith element
-      *  @param i index of the ith element
+      *  @param i index of the element to get
       **/
      inline Type& operator[](int i)
      {
@@ -337,8 +341,8 @@ return this->asDerived().elt1Impl(i);
 };
 
 /** @ingroup Arrays
- *  @brief Specialized interface class for homogeneous arrays that can be
- *  either a 2D arrays and 1D arrays.
+ *  @brief Specialized interface class for all arrays (can be either 2D arrays or 1D arrays).
+ *  An array have a mandatory structure given by STK::Arrays::Structure
  **/
 template < class Derived, int Structure_ = hidden::Traits<Derived>::structure_ >
 class ITContainer;
@@ -530,7 +534,7 @@ class ITContainer<Derived, Arrays::upper_triangular_>: public ITContainerBase<De
     Range rangeRowsInCol( int icol) const
     { return Range(this->beginRows(), std::min(icol, this->lastIdxRows()), 0);}
     /** @return safely the constant element (i, j).
-     *  @param i, j indexes of the row and of the column
+     *  @param i, j indexes of the element to get
      **/
     Type at(int i, int j) const
     {
@@ -732,7 +736,7 @@ class ITContainer<Derived, Arrays::upper_symmetric_>: public ITContainerBase<Der
       return sum;
     }
     /** @return safely the constant element (i, j).
-     *  @param i, j indexes of the row and of the column
+     *  @param i, j indexes of the element to get
      **/
     ConstReturnType at(int i, int j) const
     {
@@ -825,7 +829,7 @@ class ITContainer<Derived, Arrays::diagonal_>: public ITContainerBase<Derived>
       if (this->endRows() <= i) { STKOUT_OF_RANGE_2ARG(ITContainer::at, i, j, endRows() <= i);}
       if (this->beginCols() > j){ STKOUT_OF_RANGE_2ARG(ITContainer::at, i, j, beginCols() > j);}
       if (this->endCols() <= j) { STKOUT_OF_RANGE_2ARG(ITContainer::at, i, j, endCols() <= j);}
-      return (i==j) ? this->asDerived().elt1Impl(i) : Type();
+      return (i==j) ? this->asDerived().elt2Impl(i,j) : Type();
     }
     /** @return safely the constant ith diagonal element.
      *  @param i index of the diagonal element
