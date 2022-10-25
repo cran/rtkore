@@ -36,9 +36,17 @@
 #ifndef STK_RANGE_H
 #define STK_RANGE_H
 
-#include <Sdk/include/STK_IRecursiveTemplate.h>
-#include "STK_String.h"
 #include <map>
+
+/** @ingroup Sdk
+ *  @brief base index of the containers created in STK++.
+ *  This value means that the default range for a vector or the rows/columns of
+ *  a matrix is the value given by this constant. **/
+#if defined(STKBASEARRAYS)
+const int firstIdx_ = STKBASEARRAYS;
+#else
+const int firstIdx_ = 0; // default is 0 based array
+#endif
 
 
 /** Utility macro that can be used in a similar way that first:last */
@@ -46,10 +54,6 @@
 
 namespace STK
 {
-// forward declaration
-template<typename Type> struct Arithmetic;
-template<typename Type> struct IdTypeImpl;
-
 // forward declaration
 template<int Size_> class TRange;
 typedef TRange<UnknownSize> Range;
@@ -63,40 +67,30 @@ ostream& operator<< (ostream& s, TRange<Size_> const& I);
 template<class Derived>
 class RangeBase: public IRecursiveTemplate<Derived>
 {
-  public:
+  protected:
     /** Default constructor*/
-    inline RangeBase(): begin_(baseIdx) {}
+    inline RangeBase(): begin_(firstIdx_) {}
     /** constructor.
      * @param begin beginning of range
      **/
     inline RangeBase( int begin): begin_(begin) {}
-    /** constructor.
-     * @param range range to copy
+    /** Copy constructor.
+     * @param I range to copy
      **/
-    inline RangeBase( RangeBase const& range): begin_(range.begin_) {}
+    inline RangeBase( RangeBase const& I): begin_(I.begin_) {}
+    /** Copy constructor.
+     *  @param I range to copy
+     **/
+    template<class OtherDerived>
+    inline RangeBase( RangeBase<OtherDerived> const& I): begin_(I.begin()) {}
+
+  public:
     /** destructor. */
     inline ~RangeBase() {}
-
     /** get the first index of the TRange.
      *  @return the first index of the range
      **/
-    inline int begin()  const { return begin_;};
-    // backward compatibility
-    /** get the first index of the TRange.
-     *  @return the first index of the range
-     **/
-    inline int firstIdx()  const { return begin_;};
-
-    /** shift range a:b becomes (a+i):(b+i)
-     *  @param i shift to apply
-     *  @return @c true if the range are equals, @c false otherwise
-     **/
-    inline Derived& operator+=(int i) { return this->asDerived().inc(i);}
-    /** shift range a:b becomes (a+i):(b+i)
-     *  @param i shift to apply
-     *  @return @c true if the range are equals, @c false otherwise
-     **/
-    inline Derived& operator-=(int i) { return this->asDerived().dec(i);}
+    inline int begin() const { return begin_;};
 
     /** check if this TRange in include in an other TRange
      *  @param I the index to compare
@@ -117,6 +111,18 @@ class RangeBase: public IRecursiveTemplate<Derived>
      *  @return @c true if i is in this, @c false otherwise
      **/
     inline bool isContaining(int i) const { return ((begin_<=i)&&(i<this->asDerived().end()));}
+
+    /** shift range a:b becomes (a+i):(b+i)
+     *  @param i shift to apply
+     *  @return @c true if the range are equals, @c false otherwise
+     **/
+    inline Derived& operator+=(int i) { return this->asDerived().inc(i);}
+    /** shift range a:b becomes (a+i):(b+i)
+     *  @param i shift to apply
+     *  @return @c true if the range are equals, @c false otherwise
+     **/
+    inline Derived& operator-=(int i) { return this->asDerived().dec(i);}
+
     /** compare this range with range @c I
      *  @param I the Index to compare
      *  @return @c true if the range are equals, @c false otherwise
@@ -154,26 +160,30 @@ template<int Size_>
 class TRange: public RangeBase< TRange<Size_> >
 {
   public:
-    typedef RangeBase<TRange<Size_> > Base;
+    typedef RangeBase< TRange<Size_> > Base;
     using Base::begin_;
+
     /** Default constructor. Give the size of the sub-region.
-     *  @param size size of the sub-region
+     *  @param size size of the sub-region (size is not used in fixed size range)
      **/
-    inline TRange( int size = Size_): Base(baseIdx) {}
+    inline TRange( int size = Size_): Base() {}
     /** Full constructor. Give the beginning and the size of the sub-region.
-     *  @param first, size beginning and size of the sub-region
+     *  @param first beginning of the sub-region
      **/
-    inline TRange( int first, int size): Base(first) {}
-    /** Complete constructor. Give the beginning and the end of the sub-region.
-     *  @param first, last first and last indexes of the sub-region
-     *  @param junk allow to use the constructor (begin,last) rather than (begin,size)
+    inline TRange( int first, int ): Base(first) {}
+    /** Complete constructor. Give the beginning and the last indexes of the sub-region.
+     *  @param first first index of the sub-region
      **/
-    inline TRange( int first, int last, bool junk): Base(first) {}
+    inline TRange( int first, int , bool ): Base(first) {}
+    /** copy constructor
+     *  @param I Range to copy
+     **/
+    inline TRange(TRange const& I): Base(I) {}
     /** copy constructor
      *  @param I Range to copy
      **/
     template<int OtherSize_>
-    inline TRange(TRange<OtherSize_> const& I): Base(I.begin()) {}
+    inline TRange(TRange<OtherSize_> const& I): Base(I) {}
     /** destructor. */
     inline ~TRange() {}
     /** get the ending index of the TRange.
@@ -234,7 +244,149 @@ class TRange: public RangeBase< TRange<Size_> >
      *  @param dec the decrement to apply
      **/
     inline TRange& decLast(int dec =1){ return *this;}
+};
 
+/** @ingroup STKernel
+ *  @brief Index sub-vector region: Specialization when the size is unknown.
+ *
+ *  A Range is an ordered pair [first,last] denoting a sub-vector
+ *  region, similar to a Fortran 90 or Matlab colon notation.
+ *  For example :
+ *  @code
+ *  Vector A(10), B(Range(0,20));
+ *  Range I(2,4, false);
+ *  A(I) = B(Range(0,2, false));
+ *  @endcode
+ *  overwrite the elements (2, 3, 4) of A by the elements (0, 1, 2) of B.
+ *  There is no stride argument, only contiguous regions are allowed.
+ **/
+template<>
+class TRange<UnknownSize>: public RangeBase< TRange<UnknownSize> >
+{
+  public:
+    typedef RangeBase<TRange<UnknownSize> > Base;
+    using Base::begin_;
+
+    /** constructor. By default the first index is defined by the firstIdx macro.
+     *  @param size size of the sub-region
+     **/
+    inline TRange( int size =0): Base(), size_(size) {}
+    /** Complete constructor. Give the beginning and the size of the sub-region.
+     *  @param first, size beginning and size of the range
+     **/
+    inline TRange( int first, int size): Base(first), size_(size) {}
+    /** Complete constructor. Give the first and last index of the sub-region.
+     *  @param first, last first and last indexes of the sub-region
+     *  @param junk allow to use the constructor (begin:last) rather than (begin,size)
+     **/
+    inline TRange( int first, int last, bool junk): Base(first), size_(last+1-first) {}
+    /** @brief Copy constructor.
+     *  Create a copy of an existing TRange.
+     *  @param I range to copy
+     **/
+    inline TRange(TRange const& I): Base(I), size_(I.size_) {}
+    /** @brief Copy constructor.
+     *  Create a copy of an existing TRange.
+     *  @param I range to copy
+     **/
+    template<int OtherSize_>
+    inline TRange(TRange<OtherSize_> const& I): Base(I), size_(I.size()) {}
+    /** destructor. */
+    inline ~TRange() {}
+    /** get the ending index of the TRange.
+     *  @return the first index of the range
+     **/
+    inline int end()  const { return begin_+ size_;}
+    /** get the size of the TRange (the number of elements).
+     *  @return the size of the range
+     **/
+    inline int size()   const { return size_;}
+    /** check if the range is empty or not.
+     *  @return @c true if size <=0, @c false otherwise
+     */
+    inline bool empty() const { return size_<=0;}
+
+    // backward compatibility
+    /** get the last index of the TRange.
+     *  @return the last index of the range
+     **/
+    inline int lastIdx() const { return(end()-1);}
+
+    /** Shift the TRange giving the first element: the size is not modified.
+     *  @param first new value of the first element. */
+    inline TRange& shift(int first) { return inc(first - begin_);}
+    /** create the TRange [begin_+inc, end_+inc_).
+     *  @param inc the increment to apply
+     **/
+    inline TRange& inc(int inc =1){ begin_ +=inc; return *this;}
+    /** create the TRange [begin_+inc, end_).
+     *  @param dec the decrement to apply
+     **/
+    inline TRange& dec(int dec =1) { begin_ -=dec; return *this;}
+    /** create the TRange [begin_-dec, end_-dec)
+     *  @param inc the increment to apply to begin_
+     **/
+
+    inline TRange& incFirst(int inc =1) { begin_ +=inc; size_ -=inc; return *this;}
+    /** @brief create the TRange [begin_-dec, end_)
+     * @param dec the decrement to apply
+     **/
+    inline TRange& decFirst(int dec =1) { begin_ -=dec; size_ +=dec; return *this;}
+
+    /** create the TRange [begin_, end_+inc)
+     *  @param inc the increment to apply
+     **/
+    inline TRange& incEnd(int inc =1) { size_ +=inc; return *this;}
+    /** create the TRange [begin_, end_-dec)
+     *  @param dec the decrement to apply
+     **/
+    inline TRange& decEnd(int dec =1){ size_ -=dec; return *this;}
+
+    // backward compatibility
+    /** create the TRange [begin_, end_+inc)
+     *  @param inc the increment to apply
+     **/
+    inline TRange& incLast(int inc =1) { size_ +=inc; return *this;}
+    /** create the TRange [begin_, end_-dec)
+     *  @param dec the decrement to apply
+     **/
+    inline TRange& decLast(int dec =1){ size_ -=dec; return *this;}
+
+    /** Take the lowest value of begin_ and I.begin_ for begin_
+     *  and the largest value of end_ and I.end_ for end_.
+     *  @param I the index to apply
+     **/
+    template<int OtherSize_>
+    inline TRange& sup(TRange<OtherSize_> const& I)
+    {
+      begin_  = std::min(begin_, I.begin());
+      size_   = std::max(end(), I.end()) - begin_;
+      return *this;
+    }
+    /** Take the largest value of begin_ and I.begin_ for begin_
+     *  and the lowest value of end_ and I.end_ for end_.
+     *  @param I the index to apply
+     **/
+    template<int OtherSize_>
+    inline TRange& inf(TRange<OtherSize_> const& I)
+    {
+      begin_ = std::max(begin_, I.begin());
+      size_  = std::min(end(), I.end()) - begin_;
+      return *this;
+    }
+
+    /** @brief Read a Range in the form first:last (MATLAB-like form) from
+     *  an input stream. The input stream can also be a number (say n).
+     *  In this case the range will be n:n. If the range cannot be read the
+     *  method return a NA value
+     *  @param is the input stream
+     *  @param I the range to set
+     *  @return is stream
+     **/
+    friend istream& operator>> (istream& is, Range& I);
+
+  private:
+    int size_;     ///< theoretic Dimension size_ = end_- begin_
 
 };
 
@@ -275,171 +427,36 @@ struct IdTypeImpl< TRange<Size_> >
   static inline Base::IdType returnType() { return(Base::range_);}
 };
 
-/** @ingroup STKernel
- *  @brief Index sub-vector region: Specialization when the size is unknown.
- *
- *  A Range is an ordered pair [first,last] denoting a sub-vector
- *  region, similar to a Fortran 90 or Matlab colon notation.
- *  For example :
- *  @code
- *  Vector A(10), B(Range(0,20));
- *  Range I(2,4, false);
- *  A(I) = B(Range(0,2, false));
- *  @endcode
- *  overwrite the elements (2, 3, 4) of A by the elements (0, 1, 2) of B.
- *  There is no stride argument, only contiguous regions are allowed.
- **/
-template<>
-class TRange<UnknownSize>: public RangeBase< TRange<UnknownSize> >
+
+inline istream& operator>> (istream& is, Range& I)
 {
-  public:
-    typedef RangeBase<TRange<UnknownSize> > Base;
-    using Base::begin_;
-
-    /** constructor. By default the first index is defined by the baseIdx macro.
-     *  @param size size of the sub-region
-     **/
-    inline TRange( int size =0): Base(baseIdx), end_(size+baseIdx), size_(size) {}
-    /** Complete constructor. Give the beginning and the size of the sub-region.
-     *  @param first, size beginning  and size of the sub-region
-     **/
-    inline TRange( int first, int size): Base(first), end_(size+first), size_(size) {}
-    /** Complete constructor. Give the first and last index of the sub-region.
-     *  @param first, last first and last indexes of the sub-region
-     *  @param junk allow to use the constructor (begin,last) rather than (begin,size)
-     **/
-    inline TRange( int first, int last, bool junk): Base(first), end_(last+1), size_(end_-first) {}
-    /** @brief Copy constructor.
-     *  Create a copy of an existing TRange.
-     *  @param I range to copy
-     **/
-    template<int OtherSize_>
-    inline TRange(TRange<OtherSize_> const& I): Base(I.begin()), end_(I.end()), size_(I.size()) {}
-    /** destructor. */
-    inline ~TRange() {}
-    /** get the ending index of the TRange.
-     *  @return the first index of the range
-     **/
-    inline int end()  const { return end_;};
-    /** get the size of the TRange (the number of elements).
-     *  @return the size of the range
-     **/
-    inline int size()   const { return size_;};
-    /** check if the range is empty or not.
-     *  @return @c true if size <=0, @c false otherwise
-     */
-    inline bool empty() const { return size_<=0;};
-
-    // backward compatibility
-    /** get the last index of the TRange.
-     *  @return the last index of the range
-     **/
-    inline int lastIdx() const { return(end_-1);};
-
-    /** Shift the TRange giving the first element: the size is not modified.
-     *  @param first new value of the first element. */
-    inline TRange& shift(int first) { return inc(first - begin_);}
-    /** create the TRange [begin_+inc, end_+inc_).
-     *  @param inc the increment to apply
-     **/
-    inline TRange& inc(int inc =1){ if(inc) { begin_ +=inc; end_ +=inc;} return *this;}
-    /** create the TRange [begin_+inc, end_).
-     *  @param dec the decrement to apply
-     **/
-    inline TRange& dec(int dec =1) { if(dec) { begin_ -=dec; end_ -=dec;} return *this;}
-    /** create the TRange [begin_-dec, end_-dec)
-     *  @param inc the increment to apply to begin_
-     **/
-
-    inline TRange& incFirst(int inc =1) { begin_ +=inc; size_ -=inc; return *this;}
-    /** @brief create the TRange [begin_-dec, end_)
-     * @param dec the decrement to apply
-     **/
-    inline TRange& decFirst(int dec =1) { begin_ -=dec; size_  +=dec; return *this;}
-
-    /** create the TRange [begin_, end_+inc)
-     *  @param inc the increment to apply
-     **/
-    inline TRange& incEnd(int inc =1) { end_ +=inc; size_ +=inc; return *this;}
-    /** create the TRange [begin_, end_-dec)
-     *  @param dec the decrement to apply
-     **/
-    inline TRange& decEnd(int dec =1){ end_ -= dec; size_ -=dec; return *this;}
-
-    // backward compatibility
-    /** create the TRange [begin_, end_+inc)
-     *  @param inc the increment to apply
-     **/
-    inline TRange& incLast(int inc =1) { end_ +=inc; size_ +=inc; return *this;}
-    /** create the TRange [begin_, end_-dec)
-     *  @param dec the decrement to apply
-     **/
-    inline TRange& decLast(int dec =1){ end_ -= dec; size_ -=dec; return *this;}
-
-    /** Take the lowest value of begin_ and I.begin_ for begin_
-     *  and the largest value of end_ and I.end_ for end_.
-     *  @param I the index to apply
-     **/
-    template<int OtherSize_>
-    inline TRange& sup(TRange<OtherSize_> const& I)
-    {
-      begin_ = std::min(begin_, I.begin()); end_  = std::max(end_, I.end());
-      size_  = end_ - begin_;
-      return *this;
-    }
-    /** Take the largest value of begin_ and I.begin_ for begin_
-     *  and the lowest value of end_ and I.end_ for end_.
-     *  @param I the index to apply
-     **/
-    template<int OtherSize_>
-    inline TRange& inf(TRange<OtherSize_> const& I)
-    {
-      begin_ = std::max(begin_, I.begin()); end_  = std::min(end_, I.end());
-      size_  = end_ - begin_;
-      return *this;
-    }
-
-    /** @brief Read a Range in the form first:last (MATLAB-like form) from
-     *  an input stream. The input stream can also be a number (say n).
-     *  In this case the range will be n:n. If the range cannot be read the
-     *  method return a NA value
-     *  @param is the input stream
-     *  @param I the range to set
-     **/
-    friend inline istream& operator>> (istream& is, Range& I)
-    {
-      String str;
-      std::getline(is, str, _T(':'));
-      // get first number
-      if (!stringToType(I.begin_, str))
-      {
-        I = Arithmetic<Range>::NA();
-        is.clear(); is.setstate(std::ios::failbit);
-        return is;
-      }
-      // check if the istream is exhausted
-      if (is.eof())
-      {
-        I.end_ = I.begin_+1;
-        return is;
-      }
-      // skip the current char ":"
-      is.peek();
-      // get second number
-      if ((is >> I.end_).fail())
-      {
-        I = Arithmetic<Range>::NA();
-        is.clear(); is.setstate(std::ios::failbit);
-        return is;
-      }
-      return is;
-    }
-
-  private:
-    int end_;      ///< ending index
-    int size_;     ///< theoretic Dimension size_ = end_- begin_
-
-};
+  String str;
+  std::getline(is, str, _T(':'));
+  // get first number
+  if (!stringToType(I.begin_, str))
+  {
+    I = Arithmetic<Range>::NA();
+    is.clear(); is.setstate(std::ios::failbit);
+    return is;
+  }
+  // check if the istream is exhausted
+  if (is.eof())
+  {
+    I.size_ = 1;
+    return is;
+  }
+  // skip the current char ":"
+  is.peek();
+  // get second number
+  if ((is >> I.size_).fail())
+  {
+    I = Arithmetic<Range>::NA();
+    is.clear(); is.setstate(std::ios::failbit);
+    return is;
+  }
+  else { I.size_ -= I.begin_ ;}
+  return is;
+}
 
 /** @ingroup STKernel
  *  @brief compute sup(I,J).
@@ -449,7 +466,7 @@ class TRange<UnknownSize>: public RangeBase< TRange<UnknownSize> >
 */
 template<int SizeI_, int SizeJ_>
 Range sup(TRange<SizeI_> const& I, TRange<SizeJ_> const& J)
-{ return Range(std::min(I.begin(), J.begin()), std::max(I.end(), J.end())-1, 0);}
+{ return Range(std::min(I.begin(), J.begin()), std::max(I.lastIdx(), J.lastIdx()), 0);}
 /** @ingroup STKernel
  *  @brief compute inf(I,J).
  *  Take the largest value of I.begin() and J.begin() for begin
@@ -458,7 +475,35 @@ Range sup(TRange<SizeI_> const& I, TRange<SizeJ_> const& J)
  */
 template<int SizeI_, int SizeJ_>
 Range inf(TRange<SizeI_> const& I, TRange<SizeJ_> const& J)
-{ return Range(std::max(I.begin(), J.begin()), std::min(I.end(), J.end())-1, 0);}
+{ return Range(std::max(I.begin(), J.begin()), std::min(I.lastIdx(), J.lastIdx()), 0);}
+/** @ingroup STKernel
+ *  @brief if I=a:b, return a+1:b
+ *  @return range I with first index + 1
+*/
+template<int SizeI_>
+Range incFirst(TRange<SizeI_> const& I)
+{ return Range(I.begin()+1, I.lastIdx(), 0);}
+/** @ingroup STKernel
+ *  @brief if I=a:b, return a:b+1
+ *  @return range I with first index + 1
+*/
+template<int SizeI_>
+Range incLast(TRange<SizeI_> const& I)
+{ return Range(I.begin(), I.lastIdx()+1, 0);}
+/** @ingroup STKernel
+ *  @brief if I=a:b, return a-1:b
+ *  @return range I with first index + 1
+*/
+template<int SizeI_>
+Range decFirst(TRange<SizeI_> const& I)
+{ return Range(I.begin()-1, I.lastIdx(), 0);}
+/** @ingroup STKernel
+ *  @brief if I=a:b, return a:b-1
+ *  @return range I with first index + 1
+*/
+template<int SizeI_>
+Range decLast(TRange<SizeI_> const& I)
+{ return Range(I.begin(), I.lastIdx()-1, 0);}
 
 /** @ingroup Base
  *  @brief Write a TRange in the form first:last (MATLAB-like form) in an output stream.

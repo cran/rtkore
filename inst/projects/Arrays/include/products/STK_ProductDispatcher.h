@@ -45,6 +45,11 @@ namespace STK
 // forward declarations (needed because there is no CAllocator with this structure)
 template<typename> class Array2DUpperTriangular;
 template<typename> class Array2DLowerTriangular;
+template<typename Type, int SizeRows_, int SizeCols_, bool Orient_> class CAllocator;
+
+template<typename> class SArray2DUpperTriangular;
+template<typename> class SArray2DLowerTriangular;
+template<typename> class SArray2D;
 
 namespace hidden
 {
@@ -65,14 +70,19 @@ struct ProductTraits<Lhs, Rhs, Arrays::array2D_, RStructure_>
                  ? Traits<Rhs>::orient_
                  : int(Traits<Lhs>::sizeRows_) > int(Traits<Rhs>::sizeCols_)
                    ? int(Traits<Lhs>::orient_) : int(Traits<Rhs>::orient_),
-    storage_  = ( Traits<Lhs>::storage_ == int(Arrays::dense_))||(Traits<Rhs>::storage_ == int(Arrays::dense_))
+    storage_   = ( Traits<Lhs>::storage_ == int(Arrays::dense_))||(Traits<Rhs>::storage_ == int(Arrays::dense_))
                 ? int(Arrays::dense_) : int(Arrays::sparse_)
     , useForRows_ = Arrays::useLhsSize_
     , useForCols_ = Arrays::useRhsSize_
   };
+
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 //------------------------------------------------------------
@@ -99,8 +109,12 @@ struct ProductTraits<Lhs, Rhs, Arrays::array2D_, Arrays::square_>
   };
 
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 //----------------------------------
@@ -125,10 +139,14 @@ struct ProductTraits<Lhs, Rhs, Arrays::square_, RStructure_>
     , useForRows_ = Traits<Lhs>::sizeRows_ != UnknownSize ? Arrays::useLhsSize_ : Arrays::useRhsSize_
     , useForCols_ = Arrays::useRhsSize_
   };
-  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
-  typedef CAllocator<Type, sizeRows_,sizeCols_, orient_> Allocator;
+  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 //----------------------------------
@@ -154,10 +172,14 @@ struct ProductTraits<Lhs, Rhs, LStructure_, Arrays::square_>
    , useForRows_ = Arrays::useLhsSize_
    , useForCols_ = Traits<Lhs>::sizeCols_ != UnknownSize ? Arrays::useLhsSize_ : Arrays::useRhsSize_
   };
-  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
-  typedef CAllocator<Type, sizeRows_,sizeCols_, orient_> Allocator;
+  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 template<typename Lhs, typename Rhs>
@@ -180,10 +202,14 @@ struct ProductTraits<Lhs, Rhs, Arrays::square_, Arrays::square_>
     , useForRows_ = Traits<Lhs>::sizeRows_ != UnknownSize ? Arrays::useLhsSize_ : Arrays::useRhsSize_
     , useForCols_ = Traits<Rhs>::sizeCols_ != UnknownSize ? Arrays::useRhsSize_ : Arrays::useLhsSize_
   };
-  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 //----------------------------------
@@ -206,10 +232,14 @@ struct ProductTraits<Lhs, Rhs, Arrays::lower_triangular_, RStructure_>
     , useForRows_ = Arrays::useLhsSize_
     , useForCols_ = Arrays::useRhsSize_
   };
-  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 template<typename Lhs, typename Rhs>
@@ -231,10 +261,14 @@ struct ProductTraits<Lhs, Rhs, Arrays::lower_triangular_, Arrays::square_>
     , useForRows_ = Arrays::useLhsSize_
     , useForCols_ = Traits<Lhs>::sizeCols_ != UnknownSize ? Arrays::useLhsSize_ : Arrays::useRhsSize_
   };
-  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
 
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
+
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 template<typename Lhs, typename Rhs>
@@ -256,9 +290,12 @@ struct ProductTraits<Lhs, Rhs, Arrays::lower_triangular_, Arrays::lower_triangul
    , useForCols_ = Arrays::useRhsSize_
 };
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
-  typedef Array2DLowerTriangular<Type> Allocator; // no CAllocator
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , Array2DLowerTriangular<Type>
+                     , SArray2DLowerTriangular<Type>
+                     >::Result Allocator;
 };
 
 //----------------------------------
@@ -282,9 +319,12 @@ struct ProductTraits<Lhs, Rhs, Arrays::upper_triangular_, RStructure_>
     , useForCols_ = Arrays::useRhsSize_
   };
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
-  typedef CAllocator<Type, sizeRows_ , sizeCols_, orient_> Allocator;
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 template<typename Lhs, typename Rhs>
@@ -307,9 +347,12 @@ struct ProductTraits<Lhs, Rhs, Arrays::upper_triangular_, Arrays::square_>
    , useForCols_ = Traits<Lhs>::sizeCols_ != UnknownSize ? Arrays::useLhsSize_ : Arrays::useRhsSize_
   };
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
-  typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , CAllocator<Type, sizeRows_,sizeCols_, orient_>
+                     , SArray2D<Type>
+                     >::Result Allocator;
 };
 
 template<typename Lhs, typename Rhs>
@@ -331,13 +374,17 @@ struct ProductTraits<Lhs, Rhs, Arrays::upper_triangular_, Arrays::upper_triangul
    , useForCols_ = Arrays::useRhsSize_
   };
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
-  typedef Array2DUpperTriangular<Type> Allocator;  // no CAllocator
+  typedef typename If< storage_ == int(Arrays::dense_)
+                     , Array2DUpperTriangular<Type>
+                     , SArray2DUpperTriangular<Type>
+                     >::Result Allocator;
 };
 
 /** @ingroup hidden
- *  Dispatcher allowing to choose the way to multiply two expressions.
+ *  Dispatcher allowing to choose th
+ *  e way to multiply two expressions.
  *
  *  @note In the some cases, e.g. when some of the structures are triangular for
  *  examples, we use the usual matrix multiplication formula. This can be enhanced

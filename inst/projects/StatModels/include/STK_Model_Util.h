@@ -38,7 +38,7 @@
 #ifndef STK_MODEL_UTIL_H
 #define STK_MODEL_UTIL_H
 
-#include <STKernel/include/STK_String.h>
+#include <STKernel.h>
 
 namespace STK
 {
@@ -91,6 +91,7 @@ enum StatisticalModels
 enum TypeCriterion
 {
   unknownCriterion_ = -1, ///< unknown criterion
+  unknown_criterion_ = -1, ///< unknown criterion
   aic_,     ///< akaike criterion
   bic_,     ///< information criterion
   icl_,      ///< integrated likelihood criterion

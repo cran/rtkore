@@ -35,9 +35,8 @@
 #ifndef STK_DATABRIDGE_H
 #define STK_DATABRIDGE_H
 
+#include <Arrays.h>
 #include "STK_IDataBridge.h"
-
-#include <Arrays/include/STK_ITContainer2D.h>
 
 namespace STK
 {
@@ -54,12 +53,6 @@ class DataBridge: public IDataBridge
     /** data set */
     Data dataij_;
 
-    typedef typename hidden::Traits<Data>::Type Type;
-    typedef std::vector<std::pair<int,int> > MissingIndexes;
-    typedef std::vector< std::pair<std::pair<int,int>, Type > > MissingValues;
-
-    using IDataBridge::v_missing_;
-
     /** default constructor. */
     DataBridge( std::string const& idData): IDataBridge(idData), dataij_() {}
     /** constructor with data. */
@@ -70,51 +63,12 @@ class DataBridge: public IDataBridge
     DataBridge( DataBridge const& bridge): IDataBridge(bridge), dataij_(bridge.dataij_) {}
     /** destructor */
     virtual ~DataBridge() {}
-    /** @return data set */
-    Data const& dataij() const { return dataij_;}
-    /** @return data set */
-    Data& dataij() { return dataij_;}
 
-    /** get (estimated) missing values of the data set */
-    void getMissingValues( MissingValues& data) const;
-
- protected:
-    /** utility function for lookup the data set and find missing values coordinates.
-     *  @return the number of missing values
-     **/
-    virtual size_t findMissing();
+    /** @return data set */
+    inline Data const& dataij() const { return dataij_;}
+    /** @return data set */
+    inline Data& dataij() { return dataij_;}
 };
-
-template<class Data>
-void DataBridge<Data>::getMissingValues( MissingValues& data) const
-{
-  data.resize(v_missing_.size());
-  for(size_t i = 0; i< v_missing_.size(); ++i)
-  {
-    data[i].first  = v_missing_[i];
-    data[i].second = dataij_(v_missing_[i].first, v_missing_[i].second);
-  }
-}
-
-template<class Data>
-std::vector< std::pair<int,int> >::size_type DataBridge<Data>::findMissing()
-{
-#ifdef STK_DMANAGER_VERBOSE
-  stk_cout << _T("IDataBridge::Entering findMissing()\n");
-#endif
-  for (int j=dataij_.beginCols(); j< dataij_.endCols(); ++j)
-  {
-    for (int i=dataij_.beginRows(); i< dataij_.endRows(); ++i)
-    {
-      if (Arithmetic<Type>::isNA(dataij_(i,j)))
-      { v_missing_.push_back(std::pair<int,int>(i,j));}
-    }
-  }
- return v_missing_.size();
-#ifdef STK_DMANAGER_VERBOSE
-  stk_cout << _T("IDataBridge::findMissing() terminated, nbMiss= ") << v_missing_.size() << _T("\n");
-#endif
-}
 
 } // namespace STK
 

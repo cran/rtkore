@@ -54,7 +54,7 @@ class GaussianModel: public IGaussianModel<Array>
   public:
     typedef IGaussianModel<Array> Base;
     using Base::p_dataij_;
-    using Base::nbVariable;
+
     using Base::mean_;
 
     typedef typename hidden::Traits<Array>::Col ColVector;
@@ -105,7 +105,7 @@ GaussianModel<Array>::GaussianModel( Array const* p_dataij)
                                   , cov_(p_dataij_->cols())
                                   , p_law_(0)
 {
-  this->setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);
+  this->setNbFreeParameter(p_dataij_->sizeCols() + (p_dataij_->sizeCols()* (p_dataij_->sizeCols()-1))/2);
 }
 
 /* constructor */
@@ -114,7 +114,7 @@ GaussianModel<Array>::GaussianModel( Array const& data)
                                   : Base(data)
                                    , cov_(data.cols())
                                    , p_law_(0)
-{ setNbFreeParameter(nbVariable() + (nbVariable()* (nbVariable()-1))/2);}
+{ setNbFreeParameter(p_dataij_->sizeCols() + (p_dataij_->sizeCols()* (p_dataij_->sizeCols()-1))/2);}
 
 /* destructor */
 template <class Array>

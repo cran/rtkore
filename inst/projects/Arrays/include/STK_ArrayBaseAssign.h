@@ -115,7 +115,7 @@ inline Derived&  ArrayBase<Derived>::operator+=( ExprBase<Rhs> const& rhs)
   enum { orient_     = hidden::Traits<Derived>::orient_
        , RStructure_ = hidden::Traits<Rhs>::structure_
        };
-  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::sumOp_>::Result Res;
+  typedef typename hidden::OperatorSelector<Derived, Rhs, Arrays::sumOp_>::Result Res;
   hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() + rhs.asDerived());
   return this->asDerived();
 }
@@ -126,7 +126,7 @@ inline Derived&  ArrayBase<Derived>::operator-=( ExprBase<Rhs> const& rhs)
     enum { orient_     = hidden::Traits<Derived>::orient_
          , RStructure_ = hidden::Traits<Rhs>::structure_
          };
-  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::differenceOp_>::Result Res;
+  typedef typename hidden::OperatorSelector<Derived, Rhs, Arrays::differenceOp_>::Result Res;
   hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() - rhs.asDerived());
   return this->asDerived();
 }
@@ -138,7 +138,7 @@ inline Derived&  ArrayBase<Derived>::operator/=( ExprBase<Rhs> const& rhs)
     enum { orient_     = hidden::Traits<Derived>::orient_
          , RStructure_ = hidden::Traits<Rhs>::structure_
          };
-  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::divisionOp_>::Result Res;
+  typedef typename hidden::OperatorSelector<Derived, Rhs, Arrays::divisionOp_>::Result Res;
   hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() / rhs.asDerived());
   return this->asDerived();
 }
@@ -164,7 +164,7 @@ inline Derived&  ArrayBase<Derived>::operator%=( ExprBase<Rhs> const& rhs)
     enum { orient_     = hidden::Traits<Derived>::orient_
          , RStructure_ = hidden::Traits<Rhs>::structure_
          };
-  typedef typename hidden::OperatorHelper<Derived, Rhs, Arrays::moduloOp_>::Result Res;
+  typedef typename hidden::OperatorSelector<Derived, Rhs, Arrays::moduloOp_>::Result Res;
   hidden::CopycatSelector<Derived, Res, orient_>::run(this->asDerived(), this->asDerived() % rhs.asDerived());
   return this->asDerived();
 }
@@ -220,15 +220,19 @@ template<class Derived>
 template<class Rhs>
 inline Derived& ArrayBase<Derived>::copy( ExprBase<Rhs> const& rhs)
 {
+  STK_STATIC_ASSERT_DENSE_ONLY(Derived)
   // check
   if (this->sizeRows() != rhs.sizeRows())
   { STKRUNTIME_ERROR_2ARG(ArrayBase<Derived>::copy,this->sizeRows(), rhs.sizeRows(),sizeRows are not the sames);}
   if (this->sizeCols() != rhs.sizeCols())
   { STKRUNTIME_ERROR_2ARG(ArrayBase<Derived>::copy,this->sizeCols(), rhs.sizeCols(),sizeCols are not the sames);}
-  // copy
+  // copy. TODO: Use iterators
+  //this->asDerived().reserve(this->sizeRows(), this->sizeCols());
   for ( int jRhs=rhs.beginCols(), jLhs=this->beginCols(); jRhs<rhs.endCols(); jLhs++, jRhs++)
     for ( int iRhs=rhs.beginRows(), iLhs=this->beginRows(); iRhs<rhs.endRows(); iLhs++, iRhs++)
-  { this->elt(iLhs, jLhs) = rhs(iRhs, jRhs);}
+    {
+      setValue(iLhs, jLhs, rhs.elt(iRhs, jRhs));
+    }
   // return this
   return this->asDerived();
 }

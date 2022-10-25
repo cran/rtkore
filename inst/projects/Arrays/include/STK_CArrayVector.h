@@ -41,10 +41,6 @@ namespace STK
 {
 // forward declaration
 template< typename Type, int SizeRows_=UnknownSize, bool Orient_ = Arrays::by_col_> class CArrayVector;
-
-template< typename Type, int SizeRows_, int SizeCols_, bool Orient_> class CArray;
-template< typename Type, int Size_, bool Orient_> class CArraySquare;
-template< typename Type, int SizeCols_, bool Orient_> class CArrayPoint;
 template< typename Type, bool Orient_> class CArrayNumber;
 
 // useful typedef
@@ -83,7 +79,7 @@ struct Traits< CArrayVector<Type_, SizeRows_, Orient_> >
     typedef CAllocator<Type_, SizeRows_, 1, Orient_> Allocator;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type>::Type const& TypeConst;
 
     enum
     {
@@ -112,7 +108,7 @@ class CArrayVector: public ICArray < CArrayVector<Type_, SizeRows_, Orient_> >
     typedef typename hidden::Traits< CArrayVector<Type_, SizeRows_, Orient_> >::Row Row;
     typedef typename hidden::Traits< CArrayVector<Type_, SizeRows_, Orient_> >::Col Col;
     typedef typename hidden::Traits< CArrayVector<Type_, SizeRows_, Orient_> >::Type Type;
-    typedef typename hidden::Traits< CArrayVector<Type_, SizeRows_, Orient_> >::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits< CArrayVector<Type_, SizeRows_, Orient_> >::TypeConst TypeConst;
 
     enum
     {
@@ -188,7 +184,7 @@ class CArrayVector: public ICArray < CArrayVector<Type_, SizeRows_, Orient_> >
      *  @param v the value to set
      **/
     CArrayVector& operator=(Type const& v) { return LowBase::setValue(v);}
-    /** operator = : overwrite the CArrayPoint with the Right hand side T.
+    /** operator = : overwrite the CArrayVector with the Right hand side T.
      *  @param T the container to copy
      **/
     template<class Rhs>

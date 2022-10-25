@@ -63,7 +63,7 @@ struct StatModelTraits< ModelBernoulli_pj<Data_, WColVector_> >
   /** Type of the array storing the weights of the data */
   typedef WColVector_ WColVector;
   /** Type of the data in the container */
-  typedef typename Data::Type Type;
+  typedef typename Traits<Data_>::Type Type;
   /** Type of the parameters of the ModelBernoulli_pj */
   typedef Bernoulli_pjParameters Parameters;
 };
@@ -148,7 +148,7 @@ class ModelBernoulli_pj: public IMultiStatModel< ModelBernoulli_pj<Data_, WColVe
     /** Type of the array storing the weights of the data */
     typedef WColVector_ WColVector;
     /** Type of the data in the container */
-    typedef typename Data::Type Type;
+    typedef typename hidden::Traits<Data_>::Type Type;
     /** Base class */
     typedef IMultiStatModel< ModelBernoulli_pj<Data_, WColVector_> > Base;
     using Base::p_data;

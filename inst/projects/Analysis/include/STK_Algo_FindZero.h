@@ -35,10 +35,7 @@
 #ifndef STK_ALGO_FINDZERO_H
 #define STK_ALGO_FINDZERO_H
 
-#include "Sdk/include/STK_Macros.h"
-
-#include "STKernel/include/STK_Integer.h"
-#include "STKernel/include/STK_Real.h"
+#include <Sdk.h>
 
 #include "STK_IFunction.h"
 
@@ -52,6 +49,10 @@ namespace Algo
 // forward declaration
 template <class Function>
 Real BrentMethod( IFunction<Function> const& f, Real const& x0, Real const& x1, Real tol);
+template <class Function>
+Real SecantMethod( IFunction<Function> const& f, Real const& x0, Real const& x1, Real tol);
+template <class Function>
+Real findZero( IFunction<Function> const& f, Real const& x0, Real const& x1, Real tol);
 
 /** @ingroup Analysis
  *  @brief apply the secant method for finding the zero of a function.
@@ -227,14 +228,14 @@ Real BrentMethod( IFunction<Function> const& f, Real const& x0, Real const& x1, 
  * @return the zero of the function if any, a NA value otherwise
 **/
 template <class Function>
-Real findZero( IFunction<Function> const& f, Real const& x0, Real const& x1, Real tol = Arithmetic<Real>::epsilon())
+Real findZero( IFunction<Function> const& f, Real const& x0, Real const& x1, Real tol)
 {
   if (x0<f.xmin() || x0>f.xmax() || x1<f.xmin() || x1>f.xmax() || tol<=0 )
     return Arithmetic<Real>::NA();
   return BrentMethod(f, x0, x1, tol);
 }
 
-} // namesapce Law
+} // namespace Algo
 
 } // namespace STK
 

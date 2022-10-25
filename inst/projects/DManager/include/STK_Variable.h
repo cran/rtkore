@@ -35,18 +35,17 @@
 #define STK_VARIABLE_H
 
 #include <Arrays/include/STK_IArray1D.h>
-//#include <Arrays/include/STK_ExprBase.h>
 #include "STK_IVariable.h"
 
 namespace STK
 {
 
-template< class Type> class Variable;
+template< class Type_> class Variable;
 
 namespace hidden
 {
 /** @ingroup hidden
- *  Specialization of the Traits struct Traits for Variable class.
+ *  Specialization of the Traits struct for Variable class.
  **/
 template<class Type_>
 struct Traits< Variable<Type_> >
@@ -59,8 +58,7 @@ struct Traits< Variable<Type_> >
   typedef Variable<Type_> SubVector;
 
   typedef Type_          Type;
-  typedef typename RemoveConst<Type>::Type const& ReturnType;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type_>::Type const& TypeConst;
 
   enum
   {
@@ -69,14 +67,18 @@ struct Traits< Variable<Type_> >
     sizeCols_  = 1,
     sizeRows_  = UnknownSize,
     size_      = UnknownSize,
-    storage_ = Arrays::dense_ // always dense
+    storage_   = Arrays::dense_ // always dense
   };
+
+  typedef MemAllocator<Type_, UnknownSize> Allocator;
 
   typedef TRange<size_> RowRange;
   typedef TRange<1>     ColRange;
 
-  typedef RandomIterator1D<Variable<Type_> > Iterator;
-  typedef ConstRandomIterator1D<Variable<Type_> > ConstIterator;
+  typedef int Index;
+
+  typedef DenseRandomIterator<Variable<Type_> > Iterator;
+  typedef ConstDenseRandomIterator<Variable<Type_> > ConstIterator;
 
   typedef std::reverse_iterator<Iterator> ReverseIterator;
   typedef std::reverse_iterator<ConstIterator> ConstReverseIterator;
@@ -89,63 +91,69 @@ struct Traits< Variable<Type_> >
   * It implements all purely virtual methods defined in the IVariable base
   * class.
  **/
-template<class Type>
+template<class Type_>
 class Variable: public IVariable
-               , public IArray1D< Variable<Type> >
+              , public IArray1D< Variable<Type_> >
 {
   public:
-    typedef Variable<Type> Row;
-    typedef Variable<Type> Col;
-    typedef Variable<Type> SubRow;
-    typedef Variable<Type> SubCol;
-    typedef Variable<Type> SubArray;
-    typedef Variable<Type> SubVector;
+    typedef Variable<Type_> Row;
+    typedef Variable<Type_> Col;
+    typedef Variable<Type_> SubRow;
+    typedef Variable<Type_> SubCol;
+    typedef Variable<Type_> SubArray;
+    typedef Variable<Type_> SubVector;
+
+    typedef typename hidden::Traits<Variable<Type_> >::Type Type;
+    typedef typename hidden::Traits<Variable<Type_> >::TypeConst TypeConst;
 
     enum
     {
-      structure_ = hidden::Traits<Variable<Type> >::structure_,
-      orient_    = hidden::Traits<Variable<Type> >::orient_,
-      size_      = hidden::Traits<Variable<Type> >::size_,
-      sizeCols_  = hidden::Traits<Variable<Type> >::sizeCols_,
-      sizeRows_  = hidden::Traits<Variable<Type> >::sizeRows_,
-      storage_   = hidden::Traits<Variable<Type> >::storage_
+      structure_ = hidden::Traits< Variable<Type_> >::structure_,
+      orient_    = hidden::Traits< Variable<Type_> >::orient_,
+      size_      = hidden::Traits< Variable<Type_> >::size_,
+      sizeCols_  = hidden::Traits< Variable<Type_> >::sizeCols_,
+      sizeRows_  = hidden::Traits< Variable<Type_> >::sizeRows_,
+      storage_   = hidden::Traits< Variable<Type_> >::storage_
     };
-    typedef MemAllocator<Type*, UnknownSize> Allocator;
-    typedef IArray1D< Variable<Type> > Base;
+
+    typedef typename hidden::Traits< Variable<Type_> >::Allocator Allocator;
+
+    //typedef MemAllocator<Type_, size_> Allocator;
+    typedef IArray1D< Variable<Type_> > Base;
 
     using Base::elt;
     /** default constructor
      *  @param name name of the variable
      **/
     explicit Variable( String const& name = stringNa)
-                     : IVariable(IdTypeImpl<Type>::returnType(), name)
+                     : IVariable(IdTypeImpl<Type_>::returnType(), name)
                      , Base()
     {}
     /** constructor
      *  @param size,name size and name of the variable
      **/
     explicit Variable( int size, String const& name = stringNa)
-                     : IVariable(IdTypeImpl<Type>::returnType(), name)
+                     : IVariable(IdTypeImpl<Type_>::returnType(), name)
                      , Base(size)
     {}
     /** Default constructor
      *  @param I,name range and name of the variable
      **/
     explicit Variable( Range const& I, String const& name = stringNa)
-                     : IVariable(IdTypeImpl<Type>::returnType(), name)
+                     : IVariable(IdTypeImpl<Type_>::returnType(), name)
                      , Base(I)
     {}
     /** constructor with specified initial value
      *  @param I,v range of the data and initial value
      *  @param name name of the variable
      **/
-    Variable( Range const& I, Type const& v, String const& name)
-            : IVariable(IdTypeImpl<Type>::returnType(), name)
+    Variable( Range const& I, Type_ const& v, String const& name)
+            : IVariable(IdTypeImpl<Type_>::returnType(), name)
             , Base(I)
     { this->setValue(v);}
     /** copy/reference constructor.
      *  @param V the Variable to copy
-     *  @param ref true if we want to wrap V
+     *  @param ref @c true if we want to wrap V
      **/
     explicit Variable( Variable const& V, bool ref = false)
                      : IVariable(V)
@@ -153,25 +161,18 @@ class Variable: public IVariable
     {}
     /** reference constructor
      *  @param V,I Variable and range to wrap
+     *  @param ref @c true if we want to wrap V
      **/
-    explicit Variable( Variable const& V, Range const& I)
-                     : IVariable(V), Base(V, I)
+    explicit Variable( Variable const& V, Range const& I, bool ref = true)
+                     : IVariable(V), Base(V, I, true)
     {}
     /** constructor by reference, ref_=1.
      *  @param T the container to wrap
      **/
     template<class OtherArray>
     Variable( IArray1D<OtherArray> const& T)
-            : IVariable(IdTypeImpl<Type>::returnType(), stringNa)
-            , Base(T, T.range())
-    {}
-    /** Copy an other type of array/expression in a Variable.
-     *  @param T the array/expression to copy
-     **/
-    template<class OtherArray>
-    Variable( ExprBase<OtherArray> const& T)
-            : IVariable(IdTypeImpl<Type>::returnType(), stringNa)
-            , Base(T)
+            : IVariable(IdTypeImpl<Type_>::returnType(), stringNa)
+            , Base(T, T.range(), true)
     {}
     /** destructor. */
     ~Variable() {}
@@ -187,7 +188,7 @@ class Variable: public IVariable
     /**  Resize the container.
      *  @param I the range to set to the container
      **/
-    inline Variable<Type>& resize1D(Range const& I)
+    inline Variable<Type_>& resize1D(Range const& I)
     { Base::resize(I, this->cols()); return *this;}
 
     /** remove n elements to the end of the container
@@ -200,7 +201,7 @@ class Variable: public IVariable
     /** Add an element to the container.
      *  @param v the element to add
      **/
-    void push_back( Type const& v)
+    void push_back( Type_ const& v)
     { Base::pushBack();
       this->back() = v;
     }
@@ -219,21 +220,10 @@ class Variable: public IVariable
       this->name_ = V.name_;
       return Base::assign(V);
     }
-    /** Copy an other type of array/expression in an Array1D.
-     *  @param T the array/expression to copy
-     **/
-    template<class OtherArray>
-    Variable& operator=(ExprBase<OtherArray> const& T)
-    {
-      // check size
-      if (this->size()!=T.size()) this->resize(T.range());
-      for (int i=this->begin(); i<this->end(); i++) this->elt(i)= T.elt(i);
-      return *this;
-    }
     /** set the container to a constant value.
      *  @param v the value to set
      **/
-    inline Variable& operator=(Type const& v) { this->setValue(v); return *this;}
+    inline Variable& operator=(Type_ const& v) { this->setValue(v); return *this;}
 
     /** move the variable in this
      *  @param V variable to move in this
@@ -245,9 +235,9 @@ class Variable: public IVariable
     /** encode values as ints. Not used yet. */
     void encode()
     { int code = baseIdx;
-      std::pair< typename std::map<Type, int>::iterator, bool> ret;
+      std::pair< typename std::map<Type_, int>::iterator, bool> ret;
       for (int i=this->begin(); i< this->end(); i++)
-      { ret=coding_.insert(std::pair<Type, int>(this->elt(i), i));
+      { ret=coding_.insert(std::pair<Type_, int>(this->elt(i), i));
         if (ret.second==true) { code++;}
       }
     }
@@ -257,7 +247,7 @@ class Variable: public IVariable
       typename String::size_type maxlength = with_name ? this->name().size() : 0;
       // loop over the values
       for (int i=this->begin(); i<this->end(); i++)
-      { maxlength = std::max(maxlength, this->template eltAsString<Type>(i).size() );}
+      { maxlength = std::max(maxlength, this->template eltAsString<Type_>(i).size() );}
       return int(maxlength);
     }
     /** @return the number of missing values in the variable */
@@ -286,17 +276,17 @@ class Variable: public IVariable
      **/
     virtual inline void exportAsString( Variable< String >& V) const;
     /** Operator << : overwrite the Variable by converting the Strings
-     *  contained in V into the Type.
+     *  contained in V into the Type_.
      *  @param V the Variable of string to import
      **/
     virtual inline Variable& operator<<( Variable< String > const& V);
     /** Operator >> : convert the Variable V into strings.
      *  @param V Variable of String
      **/
-    virtual inline Variable<Type> const& operator>>(Variable< String >& V) const;
+    virtual inline Variable<Type_> const& operator>>(Variable< String >& V) const;
 
     /** overwrite the Variable by converting the strings
-     *  contained in V into the Type.
+     *  contained in V into the Type_.
      *  @param V Variable of String
      *  @param f io flags
      *  @return number of successful conversion
@@ -306,20 +296,20 @@ class Variable: public IVariable
                                );
   protected:
     /** store the map String <-> int */
-    std::map<Type, int> coding_;
+    std::map<Type_, int> coding_;
 };
 
 /** @return the number of missing values in the variable */
-template<class Type>
-int Variable<Type>::nbMiss() const
+template<class Type_>
+int Variable<Type_>::nbMiss() const
 {
   int nbMiss = 0;
   // loop over the values
   for (int i=this->begin(); i<this->end(); i++)
-  { if (Arithmetic<Type>::isNA(this->elt(i))) nbMiss++;}
+  { if (Arithmetic<Type_>::isNA(this->elt(i))) nbMiss++;}
   return nbMiss;
 }
-/** push back n NA values. Specialization for Type = String.
+/** push back n NA values. Specialization for Type_ = String.
  *  @param n number of NA values to add
  **/
 template<>
@@ -332,16 +322,16 @@ inline void Variable<String>::pushBackNAValues(int n)
 /** push back n NA values.
  *  @param n number of NA values to add
  **/
-template<class Type>
-inline void Variable<Type>::pushBackNAValues(int n)
+template<class Type_>
+inline void Variable<Type_>::pushBackNAValues(int n)
 {
     int first = this->end(), end = first+n;
     this->insertElt(this->end(), n);
     for (int i=first; i<end; i++)
-    this->elt(i) =  Arithmetic<Type>::NA();
+    this->elt(i) =  Arithmetic<Type_>::NA();
 }
 /** overwrite the Variable by converting the strings
- *  contained in V into the Type. Give the number of success.
+ *  contained in V into the Type_. Give the number of success.
  *  @param V Variable of String
  *  @param f io flags
  *  @return number of successful conversion
@@ -352,13 +342,13 @@ inline int Variable<String>::importFromString( Variable< String > const& V
                                              )
 { *this = V; return V.size();}
 /** overwrite the Variable by converting the strings
- *  contained in V into the Type.
+ *  contained in V into the Type_.
  *  @param V Variable of String
  *  @param f io flags
  *  @return number of successful conversion
  **/
-template<class Type>
-inline int Variable<Type>::importFromString( Variable< String > const& V
+template<class Type_>
+inline int Variable<Type_>::importFromString( Variable< String > const& V
                                 , std::ios_base& (*f)(std::ios_base&)
                                 )
 {
@@ -367,9 +357,9 @@ inline int Variable<Type>::importFromString( Variable< String > const& V
   int nSuccess = V.size();
   for (int i=V.begin(); i<V.end(); i++)
     if ( (Arithmetic<String>::isNA(V[i])) || (V[i]==stringNa) ) // not Available
-      this->elt(i) = Arithmetic<Type>::NA();
+      this->elt(i) = Arithmetic<Type_>::NA();
     else
-    if (!stringToType<Type>(this->elt(i), V[i], f)) nSuccess--;
+    if (!stringToType<Type_>(this->elt(i), V[i], f)) nSuccess--;
   return nSuccess;
 }
 /** Overwrite the variable V by converting the data into strings.
@@ -381,13 +371,13 @@ inline void Variable<String>::exportAsString( Variable< String >& V) const
 /** Overwrite the variable V by converting the data into strings.
  *  @param V Variable of String
  **/
-template<class Type>
-inline void Variable<Type>::exportAsString( Variable< String >& V) const
+template<class Type_>
+inline void Variable<Type_>::exportAsString( Variable< String >& V) const
 {
   V.resize(this->range());
   V.setName(this->name());
   for (int i=this->begin(); i<=this->lastIdx(); i++)
-  { V[i] = this->template eltAsString<Type>(i);}
+  { V[i] = this->template eltAsString<Type_>(i);}
 }
 /** Operator << : overwrite the Variable by converting the strings
  *  contained in V into the String.
@@ -402,15 +392,15 @@ inline Variable<String>& Variable<String>::operator<<( Variable< String > const&
   return *this;
 }
 /** Operator << : overwrite the Variable by converting the Strings
- *  contained in V into the Type.
+ *  contained in V into the Type_.
  *  @param V the Variable of string to import
  **/
-template<class Type>
-inline Variable<Type>& Variable<Type>::operator<<( Variable< String > const& V)
+template<class Type_>
+inline Variable<Type_>& Variable<Type_>::operator<<( Variable< String > const& V)
 {
   this->resize(V.range());
   this->setName(V.name());
-  for (int i=V.begin(); i<V.end(); i++) this->elt(i) = stringToType<Type>(V[i]);
+  for (int i=V.begin(); i<V.end(); i++) this->elt(i) = stringToType<Type_>(V[i]);
   return *this;
 }
 /** Operator >> : convert the Variable V into strings.
@@ -427,17 +417,17 @@ inline Variable<String> const& Variable<String>::operator>>(Variable< String >& 
 /** Operator >> : convert the Variable V into strings.
  *  @param V Variable of String
  **/
-template<class Type>
-inline Variable<Type> const& Variable<Type>::operator>>(Variable< String >& V) const
+template<class Type_>
+inline Variable<Type_> const& Variable<Type_>::operator>>(Variable< String >& V) const
 {
   V.resize(this->range());
   V.setName(this->name());
-  for (int i=this->begin(); i<this->end(); i++) V[i] = typeToString<Type>(this->elt(i));
+  for (int i=this->begin(); i<this->end(); i++) V[i] = typeToString<Type_>(this->elt(i));
   return *this;
 }
 /** ostream for Variable. */
-template<typename Type>
-inline ostream& operator<<(ostream& s, Variable<Type> const& V)
+template<typename Type_>
+inline ostream& operator<<(ostream& s, Variable<Type_> const& V)
 {
   s << V.name() << _T("\n");
   return out1D(s, V);

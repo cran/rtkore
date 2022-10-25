@@ -65,7 +65,7 @@ struct StatModelTraits< ModelDiagGaussian_muj_sj<Data_, WColVector_> >
   /** Type of the array storing the weights of the data */
   typedef WColVector_ WColVector;
   /** Type of the data in the container */
-  typedef typename Data::Type Type;
+  typedef typename Traits<Data_>::Type Type;
   /** Type of the parameters of the ModelDiagGaussian_muj_sj */
   typedef DiagGaussian_muj_sjParameters Parameters;
 };
@@ -138,7 +138,7 @@ class ModelDiagGaussian_muj_sj: public IMultiStatModel< ModelDiagGaussian_muj_sj
      /** Type of the array storing the weights of the data */
     typedef WColVector_ WColVector;
     /** Type of the data in the container */
-    typedef typename Data::Type Type;
+    typedef typename hidden::Traits<Data_>::Type Type;
     /** Type of the row vector of the container */
     /** Type of the parameters of the ModelDiagGaussian_muj_sj */
     typedef DiagGaussian_muj_sjParameters Parameters;

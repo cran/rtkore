@@ -480,10 +480,10 @@ Real covarianceWithFixedMeanSafe( ExprBase<XArray> const& X
  *  @c false otherwise (default is @c false)
  **/
 template < class Array >
-CArraySquare<typename Array::Type, Array::sizeCols_>
+CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_>
 covariance( ExprBase<Array> const& V, bool unbiased = false)
 {
-  CArraySquare<typename Array::Type, Array::sizeCols_> cov_(V.cols());
+  CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_> cov_(V.cols());
   // typename Array::Row mean;
   typename hidden::FunctorTraits<Array, MeanOp>::Row mean;
   // compute the mean
@@ -507,10 +507,10 @@ covariance( ExprBase<Array> const& V, bool unbiased = false)
  *  @c false otherwise (default is @c false)
  **/
 template < class Array >
-CArraySquare<typename Array::Type, Array::sizeRows_>
+CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_>
 covarianceByRow( ExprBase<Array> const& V, bool unbiased = false)
 {
-  CArraySquare<typename Array::Type, Array::sizeRows_> cov_(V.rows());
+  CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_> cov_(V.rows());
   typename hidden::FunctorTraits<Array, MeanOp>::Col mean;
   // compute the mean
   mean.move(Stat::meanByRow(V.asDerived()));
@@ -533,10 +533,10 @@ covarianceByRow( ExprBase<Array> const& V, bool unbiased = false)
  *  @c false otherwise (default is @c false)
  **/
 template <class Array, class Weights >
-CArraySquare<typename Array::Type, Array::sizeCols_>
+CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_>
 covariance( ExprBase<Array> const& V, Weights const& W, bool unbiased = false)
 {
-  CArraySquare<typename Array::Type, Array::sizeCols_> cov_(V.cols());
+  CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_> cov_(V.cols());
   typename hidden::FunctorTraits<Array, MeanOp>::Row mean;
   // compute the mean
   mean.move(Stat::mean(V.asDerived(), W.asDerived()));
@@ -559,10 +559,10 @@ covariance( ExprBase<Array> const& V, Weights const& W, bool unbiased = false)
  *  @c false otherwise (default is @c false)
  **/
 template <class Array, class Weights >
-CArraySquare<typename Array::Type, Array::sizeRows_>
+CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_>
 covarianceByRow( ExprBase<Array> const& V, Weights const& W, bool unbiased = false)
 {
-  CArraySquare<typename Array::Type, Array::sizeRows_> cov_(V.rows());
+  CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_> cov_(V.rows());
   typename hidden::FunctorTraits<Array, MeanOp>::Col mean;
   mean.move(Stat::meanByRow(V.asDerived(), W.asDerived()));
   for (int j= cov_.begin(); j< cov_.end(); j++)
@@ -585,13 +585,13 @@ covarianceByRow( ExprBase<Array> const& V, Weights const& W, bool unbiased = fal
  *  @c false otherwise (default is @c false)
  **/
 template < class Array, class Mean >
-CArraySquare<typename Array::Type, Array::sizeCols_>
+CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_>
 covarianceWithFixedMean( ExprBase<Array> const& V, ExprBase<Mean> const& mean, bool unbiased = false)
 {
 #ifdef STK_BOUNDS_CHECK
   if (V.cols()!=mean.range()) STKRUNTIME_ERROR_NO_ARG(covarianceWithFixedMean,V.cols()!=mean.range());
 #endif
-  CArraySquare<typename Array::Type, Array::sizeCols_> cov_(V.cols());
+  CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_> cov_(V.cols());
   for (int j= cov_.begin(); j< cov_.end(); j++)
   {
     cov_(j, j) = varianceWithFixedMean(V.col(j), mean[j], unbiased);
@@ -612,13 +612,13 @@ covarianceWithFixedMean( ExprBase<Array> const& V, ExprBase<Mean> const& mean, b
  *  @c false otherwise (default is @c false)
  **/
 template < class Array, class Mean >
-CArraySquare<typename Array::Type, Array::sizeRows_>
+CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_>
 covarianceWithFixedMeanByRow( ExprBase<Array> const& V, ExprBase<Mean> const& mean, bool unbiased = false)
 {
 #ifdef STK_BOUNDS_CHECK
   if (V.rows()!=mean.range()) STKRUNTIME_ERROR_NO_ARG(covarianceWithFixedMean,V.rows()!=mean.range());
 #endif
-  CArraySquare<typename Array::Type, Array::sizeRows_> cov_(V.rows());
+  CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_> cov_(V.rows());
   for (int j= cov_.begin(); j< cov_.end(); j++)
   {
     cov_(j, j) = varianceWithFixedMean(V.row(j), mean[j], unbiased);
@@ -639,7 +639,7 @@ covarianceWithFixedMeanByRow( ExprBase<Array> const& V, ExprBase<Mean> const& me
  *  @c false otherwise (default is @c false)
  **/
 template <class Array, class Weights, class Mean >
-CArraySquare<typename Array::Type, Array::sizeCols_>
+CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_>
 covarianceWithFixedMean(  ExprBase<Array> const& V, Weights const& W, ExprBase<Mean> const& mean, bool unbiased = false)
 {
 #ifdef STK_BOUNDS_CHECK
@@ -647,7 +647,7 @@ covarianceWithFixedMean(  ExprBase<Array> const& V, Weights const& W, ExprBase<M
   if (W.range()!=mean.range()) STKRUNTIME_ERROR_NO_ARG(covarianceWithFixedMean,W.range()!=mean.range());
 #endif
 
-  CArraySquare<typename Array::Type, Array::sizeCols_> cov_(V.cols());
+  CArraySquare<typename Array::Type, Array::sizeCols_, Array::orient_> cov_(V.cols(), Array::orient_);
   for (int j= cov_.begin(); j< cov_.end(); j++)
   {
     cov_(j, j) = varianceWithFixedMean(V.col(j), W, mean[j], unbiased);
@@ -668,7 +668,7 @@ covarianceWithFixedMean(  ExprBase<Array> const& V, Weights const& W, ExprBase<M
  *  @c false otherwise (default is @c false)
  **/
 template <class Array, class Weights, class Mean >
-CArraySquare<typename Array::Type, Array::sizeRows_>
+CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_>
 covarianceWithFixedMeanByRow(  ExprBase<Array> const& V, Weights const& W, ExprBase<Mean> const& mean, bool unbiased = false)
 {
 #ifdef STK_BOUNDS_CHECK
@@ -676,7 +676,7 @@ covarianceWithFixedMeanByRow(  ExprBase<Array> const& V, Weights const& W, ExprB
   if (W.range()!=mean.range()) STKRUNTIME_ERROR_NO_ARG(covarianceWithFixedMean,W.range()!=mean.range());
 #endif
 
-  CArraySquare<typename Array::Type, Array::sizeRows_> cov_(V.rows());
+  CArraySquare<typename Array::Type, Array::sizeRows_, Array::orient_> cov_(V.rows());
   for (int j= cov_.begin(); j< cov_.end(); j++)
   {
     cov_(j, j) = varianceWithFixedMean(V.row(j), W, mean[j], unbiased);

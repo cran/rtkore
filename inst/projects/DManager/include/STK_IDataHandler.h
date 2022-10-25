@@ -36,10 +36,8 @@
 #ifndef STK_IDATAHANDLER_H
 #define STK_IDATAHANDLER_H
 
-#include <map>
-#include <string>
+#include <Sdk.h>
 
-#include "STKernel/include/STK_Stream.h"
 
 namespace STK
 {
@@ -97,8 +95,6 @@ class IDataHandler
     bool getIdModelName(std::string const& idData, std::string& idModel) const;
     /** @return the number of sample (the number of rows of the data sets) */
     virtual int nbSample() const =0;
-    /** @return the number of variables (the number of columns of all the data sets) */
-    virtual int nbVariable() const =0;
     /** write the info on os */
     void writeInfo(ostream& os) const;
 

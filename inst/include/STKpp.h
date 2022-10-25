@@ -102,8 +102,8 @@
  *     <li> @subpage TutorialAlgebra
  *     <li> @subpage PageTutorialKernel
  *     <li> @subpage TutorialSTatisitK
- *     <li> @subpage TutorialClustering
- *     <li> @subpage TutorialApplication
+ *     <li> @subpage TutorialClustering1
+ *     <li> @subpage TutorialMixBin
  *     </ul>
  *  </ul>
  *
@@ -148,10 +148,10 @@
 //#include <omp.h>
 //#endif
 
-// STKernel project
-#include "STKernel.h"
 // Sdk project
 #include "Sdk.h"
+// STKernel project
+#include <STKernel.h>
 // Arrays project
 #include "Arrays.h"
 // Data Manager project

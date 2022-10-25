@@ -37,7 +37,6 @@
 #define STK_REAL_H
 
 #include <map>
-#include "STK_String.h"
 
 #ifdef IS_RTKPP_LIB
 #include "Rtkpp/include/STK_RcppTraits.h"
@@ -49,28 +48,6 @@ namespace STK
 template<typename Type> struct Arithmetic;
 template<typename Type> struct IdTypeImpl;
 
-#ifdef STKREALAREFLOAT
-/**  @ingroup Base
-  *  @brief STK fundamental type of Real values.
-  *
-  *  The type Real is defined for the numerical computation and the
-  *  internal representation of the continuous variables. By default it is the
-  *  @c double, but it can be overridden at compile-time by enabling
-  *  the STKREALAREFLOAT macro.
-  **/
-typedef  float Real;
-
-#else
-/**  @ingroup Base
-  *  @brief STK fundamental type of Real values.
-  *
-  *  The type Real is defined for the numerical computation and the
-  *  internal representation of the continuous variables. By default it is the
-  *  double type, but it can be overridden at compile-time, if needed.
-  **/
-typedef  double Real;
-
-#endif
 
 /** @ingroup Arithmetic
  *   @brief Specialization for Real.

@@ -67,7 +67,7 @@ struct StatModelTraits< ModelGamma_aj_bj<Data_, WColVector_> >
   /** Type of the array storing the weights of the data */
   typedef WColVector_ WColVector;
   /** Type of the data in the container */
-  typedef typename Data::Type Type;
+  typedef typename Traits<Data_>::Type Type;
   /** Type of the parameters of the ModelGamma_aj_bj */
   typedef ModelGamma_aj_bjParameters Parameters;
 };
@@ -165,7 +165,8 @@ class ModelGamma_aj_bj: public IMultiStatModel< ModelGamma_aj_bj<Data_, WColVect
     /** Type of the array storing the weights of the data */
     typedef WColVector_ WColVector;
     /** Type of the data in the container */
-    typedef typename Data::Type Type;
+
+
     /** Base class */
     typedef IMultiStatModel< ModelGamma_aj_bj<Data_, WColVector_> > Base;
     using Base::p_data;
@@ -239,7 +240,7 @@ void ModelGamma_aj_bj<Data_, WColVector_>::computeParameters()
     Real x0 = (mean()[j]*mean()[j]) / variance()[j];
     Real x1 = 0.9*x0 +  0.05/(mean()[j] - meanLog()[j]);
     dloglikelihood funct(mean()[j], meanLog()[j]);
-    Real a =  Algo::findZero(funct, x0, x1);
+    Real a =  Algo::findZero(funct, x0, x1, 1e-08);
     // replace with moment estimate if needed
     if (!Arithmetic<Real>::isFinite(a)) { a =  mean()[j]*mean()[j]/variance()[j];}
     shape()[j] = a;
@@ -258,7 +259,7 @@ void ModelGamma_aj_bj<Data_, WColVector_>::computeParameters( WColVector const& 
     Real x0 = (mean()[j]*mean()[j]) / variance()[j];
     Real x1 = 0.9*x0 +  0.05/(mean()[j] - meanLog()[j]);
     dloglikelihood funct(mean()[j], meanLog()[j]);
-    Real a =  Algo::findZero(funct, x0, x1);
+    Real a =  Algo::findZero(funct, x0, x1, 1e-08);
     // replace with moment estimate if needed
     if (!Arithmetic<Real>::isFinite(a)) { a =  mean()[j]*mean()[j]/variance()[j];}
     shape()[j] = a;

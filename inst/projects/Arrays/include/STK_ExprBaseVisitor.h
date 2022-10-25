@@ -35,7 +35,10 @@
 #ifndef STK_EXPRBASEVISITOR_H
 #define STK_EXPRBASEVISITOR_H
 
+#include "visitors/STK_VisitorsImpl.h"
+#include "visitors/STK_VisitorSelector.h"
 #include "visitors/STK_Visitors.h"
+#include "visitors/STK_Appliers.h"
 #include "visitors/STK_SlicingVisitors.h"
 
 namespace STK
@@ -47,7 +50,7 @@ namespace STK
   * @code
   * struct MyVisitor {
   *   // called for all  coefficients
-  *   void operator() (Type const& value, Index i, Index j);
+  *   void operator() (Type const& value, int i, int j);
   * };
   * @endcode
   *
@@ -57,7 +60,7 @@ namespace STK
   */
 template<typename Derived>
 template<typename Visitor>
-inline typename Visitor::ConstReturnType ExprBase<Derived>::visit(Visitor& visitor) const
+inline typename Visitor::TypeConst ExprBase<Derived>::visit(Visitor& visitor) const
 {
   typedef typename hidden::VisitorSelector<Visitor, Derived>::Impl Impl;
   Impl::run(this->asDerived(), visitor);

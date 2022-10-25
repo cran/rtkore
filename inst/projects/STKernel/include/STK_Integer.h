@@ -37,7 +37,6 @@
 #define STK_INTEGER_H
 
 #include <map>
-#include "STK_String.h"
 
 // for building
 #ifdef IS_RTKPP_LIB
@@ -46,14 +45,6 @@
 
 namespace STK
 {
-/** @ingroup Base
-  *  @brief STK fundamental type of discrete values.
-  *
-  *  The type Integer is defined for the numerical computation and the
-  *  internal representation of the discrete variables.
-  **/
-typedef int Integer ;
-
 /** @ingroup Arithmetic
  *  @brief Specialization for Integer (long).
  *

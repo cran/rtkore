@@ -35,17 +35,17 @@
 #ifndef STK_PRODUCTOPERATORS_H
 #define STK_PRODUCTOPERATORS_H
 
-
-#include <Sdk/include/STK_StaticAssert.h>
-#include "../allocators/STK_CAllocator.h"
-#include "../operators/STK_BinaryImpl.h"
-#include "STK_ProductDispatcher.h"
+// forward declaration
+namespace STK
+{
+  template<class Derived> class ExprBase;
+  template<typename Type, int SizeRows_, int SizeCols_, bool Orient_> class CAllocator;
+}
 
 #define EGAL(arg1, arg2) ((arg1::structure_ == int(Arrays::arg2)))
 
 namespace STK
 {
-
 /** @ingroup Arrays
   * @class ArrayByDiagonalProduct
   * @brief Generic expression where a product operator is
@@ -153,7 +153,7 @@ struct Traits< ArrayByDiagonalProduct < Lhs, Rhs> >
     storage_   = Lhs::storage_
   };
   typedef typename Promote<typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type ConstReturnType;
+  typedef typename RemoveConst<Type>::Type TypeConst;
 };
 
 } // namespace hidden
@@ -180,7 +180,7 @@ class ArrayByDiagonalProduct: public ExprBase< ArrayByDiagonalProduct<Lhs, Rhs> 
   public:
     typedef ExprBase< ArrayByDiagonalProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits<ArrayByDiagonalProduct>::Type Type;
-    typedef typename hidden::Traits<ArrayByDiagonalProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<ArrayByDiagonalProduct>::TypeConst TypeConst;
 
     enum
     {
@@ -207,12 +207,12 @@ class ArrayByDiagonalProduct: public ExprBase< ArrayByDiagonalProduct<Lhs, Rhs> 
     inline ColRange const& colsImpl() const { return rhs_.cols();}
 
     /** @return the element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return lhs_.elt(i,j)*rhs_.elt(j);}
+    inline TypeConst elt2Impl(int i, int j) const { return lhs_.elt(i,j)*rhs_.elt(j);}
     /** @return ith element
      *  @note make sense if lhs_ is a diagonal matrix, in this case this operator is also a
      *  diagonal matrix.
      **/
-    inline ConstReturnType elt1Impl(int i) const { return lhs_.elt(i)*rhs_.elt(i);}
+    inline TypeConst elt1Impl(int i) const { return lhs_.elt(i)*rhs_.elt(i);}
 
     /** @return the left hand side expression */
     inline Lhs const& lhs() const { return lhs_; }
@@ -241,7 +241,7 @@ struct Traits< DiagonalByArrayProduct < Lhs, Rhs> >
     storage_   = Rhs::storage_
   };
   typedef typename Promote<typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type ConstReturnType;  // not a reference as it is a temporary
+  typedef typename RemoveConst<Type>::Type TypeConst;  // not a reference as it is a temporary
 };
 
 } // namespace hidden
@@ -271,7 +271,7 @@ class DiagonalByArrayProduct: public ExprBase< DiagonalByArrayProduct<Lhs, Rhs> 
   public:
     typedef ExprBase< DiagonalByArrayProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits<DiagonalByArrayProduct>::Type Type;
-    typedef typename hidden::Traits<DiagonalByArrayProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<DiagonalByArrayProduct>::TypeConst TypeConst;
 
     enum
     {
@@ -298,12 +298,12 @@ class DiagonalByArrayProduct: public ExprBase< DiagonalByArrayProduct<Lhs, Rhs> 
     inline ColRange const& colsImpl() const { return rhs_.cols();}
 
     /** @return element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return lhs_.elt(i)*rhs_.elt(i,j);}
+    inline TypeConst elt2Impl(int i, int j) const { return lhs_.elt(i)*rhs_.elt(i,j);}
     /** @return ith element
      *  @note make sense if rhs_ is a diagonal matrix, in this case this operator is also a
      *  diagonal matrix.
      **/
-    inline ConstReturnType elt1Impl(int i) const { return lhs_.elt(i)*rhs_.elt(i);}
+    inline TypeConst elt1Impl(int i) const { return lhs_.elt(i)*rhs_.elt(i);}
 
     /** @return the left hand side expression */
     inline Lhs const& lhs() const { return lhs_; }
@@ -335,7 +335,7 @@ struct Traits< VectorByPointProduct < Lhs, Rhs> >
                  ? int(Arrays::dense_) : int(Arrays::sparse_)
   };
   typedef typename Promote<typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type ConstReturnType; // not a reference
+  typedef typename RemoveConst<Type>::Type TypeConst; // not a reference
 };
 
 } // namespace hidden
@@ -363,7 +363,7 @@ class VectorByPointProduct: public ExprBase< VectorByPointProduct<Lhs, Rhs> >
   public:
     typedef ExprBase< VectorByPointProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits<VectorByPointProduct>::Type Type;
-    typedef typename hidden::Traits<VectorByPointProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<VectorByPointProduct>::TypeConst TypeConst;
 
     enum
     {
@@ -386,9 +386,9 @@ class VectorByPointProduct: public ExprBase< VectorByPointProduct<Lhs, Rhs> >
     inline ColRange const& colsImpl() const { return rhs_.cols();}
 
     /** @return the element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return lhs_.elt(i)*rhs_.elt(j);}
+    inline TypeConst elt2Impl(int i, int j) const { return lhs_.elt(i)*rhs_.elt(j);}
     /** @return the element */
-    inline ConstReturnType elt0Impl() const { return lhs_.elt()*rhs_.elt();}
+    inline TypeConst elt0Impl() const { return lhs_.elt()*rhs_.elt();}
 
     /** @return the left hand side expression */
     inline Lhs const& lhs() const { return lhs_; }
@@ -421,7 +421,7 @@ struct Traits< PointByArrayProduct < Lhs, Rhs> >
    };
 
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
   typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
 };
@@ -450,7 +450,7 @@ class PointByArrayProduct: public ExprBase< PointByArrayProduct<Lhs, Rhs> >
   public:
     typedef ExprBase< PointByArrayProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits<PointByArrayProduct>::Type Type;
-    typedef typename hidden::Traits<PointByArrayProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<PointByArrayProduct>::TypeConst TypeConst;
     typedef typename hidden::Traits<PointByArrayProduct>::Allocator Allocator;
 
     enum
@@ -481,11 +481,11 @@ class PointByArrayProduct: public ExprBase< PointByArrayProduct<Lhs, Rhs> >
     inline ColRange const& colsImpl() const { return result_.cols();}
 
     /** @return the element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return result_.elt(i, j);}
+    inline TypeConst elt2Impl(int i, int j) const { return result_.elt(i, j);}
     /** @return the ith element */
-    inline ConstReturnType elt1Impl(int i) const { return result_.elt(i);}
+    inline TypeConst elt1Impl(int i) const { return result_.elt(i);}
     /** @return the element */
-    inline ConstReturnType elt0Impl() const { return result_.elt();}
+    inline TypeConst elt0Impl() const { return result_.elt();}
 
     /** @return the left hand side expression */
     inline Lhs const& lhs() const { return lhs_; }
@@ -521,7 +521,7 @@ struct Traits< ArrayByVectorProduct < Lhs, Rhs> >
    };
 
   typedef typename hidden::Promote< typename Lhs::Type, typename Rhs::Type>::result_type Type;
-  typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+  typedef typename RemoveConst<Type>::Type const& TypeConst;
 
   typedef CAllocator<Type, sizeRows_, sizeCols_, orient_> Allocator;
 };
@@ -550,7 +550,7 @@ class ArrayByVectorProduct: public ExprBase< ArrayByVectorProduct<Lhs, Rhs> >
   public:
     typedef ExprBase< ArrayByVectorProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits<ArrayByVectorProduct>::Type Type;
-    typedef typename hidden::Traits<ArrayByVectorProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<ArrayByVectorProduct>::TypeConst TypeConst;
     typedef typename hidden::Traits<ArrayByVectorProduct>::Allocator Allocator;
     enum
     {
@@ -580,11 +580,11 @@ class ArrayByVectorProduct: public ExprBase< ArrayByVectorProduct<Lhs, Rhs> >
     inline ColRange const& colsImpl() const { return result_.cols();}
 
     /** @return the element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return result_.elt(i, j);}
+    inline TypeConst elt2Impl(int i, int j) const { return result_.elt(i, j);}
     /** @return the ith element */
-    inline ConstReturnType elt1Impl(int i) const { return result_.elt(i);}
+    inline TypeConst elt1Impl(int i) const { return result_.elt(i);}
     /** @return the element */
-    inline ConstReturnType elt0Impl() const { return result_.elt();}
+    inline TypeConst elt0Impl() const { return result_.elt();}
 
     /** @return the left hand side expression */
     inline Lhs const& lhs() const { return lhs_; }
@@ -627,7 +627,7 @@ struct Traits< ArrayByArrayProduct<Lhs, Rhs> >
   };
 
   typedef typename Base::Type Type;
-  typedef typename Base::ConstReturnType ConstReturnType;
+  typedef typename Base::TypeConst TypeConst;
   typedef typename Base::Allocator Allocator;
 };
 
@@ -672,12 +672,12 @@ class ArrayByArrayProduct: public ExprBase< ArrayByArrayProduct<Lhs, Rhs> >, pub
       sizeCols_      = hidden::Traits< ArrayByArrayProduct >::sizeCols_,
       storage_       = hidden::Traits< ArrayByArrayProduct >::storage_,
       useForRows_    = hidden::Traits< ArrayByArrayProduct >::useForRows_,
-      useForCols_    = hidden::Traits< ArrayByArrayProduct >::useForCols_,
+      useForCols_    = hidden::Traits< ArrayByArrayProduct >::useForCols_
     };
 
     typedef ExprBase< ArrayByArrayProduct<Lhs, Rhs> > Base;
     typedef typename hidden::Traits< ArrayByArrayProduct>::Type Type;
-    typedef typename hidden::Traits< ArrayByArrayProduct>::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits< ArrayByArrayProduct>::TypeConst TypeConst;
 
     typedef typename hidden::Traits< ArrayByArrayProduct < Lhs, Rhs> >::Allocator Allocator;
     typedef hidden::ProductDispatcher<Lhs, Rhs, Allocator, lhs_structure_, rhs_structure_> Dispatcher;
@@ -705,11 +705,11 @@ class ArrayByArrayProduct: public ExprBase< ArrayByArrayProduct<Lhs, Rhs> >, pub
     inline Allocator const& result() const { return result_; }
 
     /** @return element (i,j) */
-    inline ConstReturnType elt2Impl(int i, int j) const { return result_.elt(i,j);}
+    inline TypeConst elt2Impl(int i, int j) const { return result_.elt(i,j);}
     /** @return ith element */
-    inline ConstReturnType elt1Impl(int i) const  { return result_.elt(i);}
+    inline TypeConst elt1Impl(int i) const  { return result_.elt(i);}
     /** @return number */
-    inline ConstReturnType elt0Impl() const { return result_.elt();}
+    inline TypeConst elt0Impl() const { return result_.elt();}
 
   protected:
     Lhs const& lhs_;

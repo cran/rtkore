@@ -36,8 +36,6 @@
 #ifndef STK_ARRAY_UTIL_H
 #define STK_ARRAY_UTIL_H
 
-#include <STKernel/include/STK_Range.h>
-
 namespace STK
 {
 
@@ -188,48 +186,24 @@ enum BinaryOpKind
 
 /** @ingroup Arrays
  *  @brief Allow to disambiguate which rows() or cols() methods must be used
- *  which array to use when calling rows(), cols(), range() in Unary, Binary, Reshape,... operators ?
+ *  which array to use when calling rows(), cols(), range() in Unary, Binary, Reshape,... operators
  **/
 enum RangeOpUse
 {
   useLhsSize_,      ///< use lhs.rows() (resp. lhs.cols())  in order to get rows() (resp. cols())
   useRhsSize_,      ///< use rhs.rows() (resp. rhs.cols())  in order to get rows() (resp. cols())
-  useLhsOtherSize_, ///< use lhs.cols() in order to get rows() or lhs.rows() in order to get cols()
-  useRhsOtherSize_, ///< use rhs.cols() in order to get rows() or rhs.rows() in order to get cols()
+  useLhsOtherSize_, ///< if @c true, use lhs.cols() in order to get rows() and lhs.rows() in order to get cols()
+  useRhsOtherSize_, ///< if @c true, use rhs.cols() in order to get rows() and rhs.rows() in order to get cols()
   useLhsRange_,     ///< use lhs.range() in order to get range()
   useRhsRange_      ///< use rhs.range() in order to get range()
 };
-
-/** @ingroup Arrays
- *  @return n+m, where n is the first number such that m < 2^n.
- *  @param m the size of the container
- **/
-inline int evalSizeCapacity(int m)
-{
-  int n = 0;
-  for (int k=1; k <= m; k <<= 1) {n++;}
-  return(m+n);
-}
-
-
-/** @ingroup Arrays
- *  @return range of size n+m, where n is the first number such that m < 2^n.
- *  @param I the range of the container
- **/
-template<int Size_>
-TRange<Size_> evalRangeCapacity(TRange<Size_> const& I)
-{
-  int n = 0;
-  for (int k=1; k <= I.size(); k <<= 1){ n++;}
-  return TRange<Size_>(I.begin(),I.size() + n);
-}
 
 /** @ingroup Arrays
  *  convert an Arrays::Structure to a String.
  *  @param type the type of Structure we want to convert
  *  @return the string associated to this type.
  **/
-inline std::string structureToString( Structure const& type)
+inline String structureToString( Structure const& type)
 {
   if (type == array2D_)          return String(_T("array2D"));
   if (type == square_)           return String(_T("square"));

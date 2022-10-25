@@ -1,5 +1,4 @@
 ### R code from vignette source 'rtkpp-Introduction.Rnw'
-### Encoding: UTF-8
 
 ###################################################
 ### code chunk number 1: prelim

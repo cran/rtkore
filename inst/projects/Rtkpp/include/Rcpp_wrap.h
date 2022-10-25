@@ -57,6 +57,23 @@ namespace Rcpp
   }
   /* support for wrap */
   template<typename Type>
+  SEXP wrap( STK::Array2DSquare<Type> const& matrix)
+  {
+    enum
+    {
+      Rtype_ = STK::hidden::RcppTraits<Type>::Rtype_
+    };
+
+    Matrix<Rtype_> res(matrix.sizeRows(), matrix.sizeCols());
+    for(int j=matrix.begin(), jRes=0; j< matrix.end(); j++, jRes++)
+    {
+      for(int i=matrix.begin(), iRes=0; i< matrix.end(); i++, iRes++)
+      { res(iRes, jRes) = matrix.elt(i,j);}
+    }
+    return Rcpp::wrap(res);
+  }
+  /* support for wrap */
+  template<typename Type>
   SEXP wrap( STK::Array2DVector<Type> const& vec)
   {
     enum
@@ -115,6 +132,18 @@ namespace Rcpp
   }
   template <typename Type, int SizeCols_, bool Orient_>
   SEXP wrap( STK::CArrayPoint<Type, SizeCols_, Orient_> const& vec)
+  {
+    enum
+    {
+      Rtype_ = STK::hidden::RcppTraits<Type>::Rtype_
+    };
+    Vector<Rtype_> res(vec.size());
+    for(int i=vec.begin(), iRes=0; i< vec.end(); i++, iRes++)
+    { res(iRes) = vec.elt(i);}
+    return Rcpp::wrap(res);
+  }
+  template <typename Type, int Size_>
+  SEXP wrap( STK::Array1D<Type, Size_> const& vec)
   {
     enum
     {

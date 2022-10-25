@@ -36,7 +36,7 @@
 #ifndef STK_ILEASTSQUARE_H
 #define STK_ILEASTSQUARE_H
 
-#include <Sdk/include/STK_IRunner.h>
+#include <Sdk.h>
 #include "STK_Algebra_Util.h"
 
 namespace STK
@@ -94,7 +94,7 @@ class ILeastSquare: public IRunnerBase, public IRecursiveTemplate<Derived>
     virtual ~ILeastSquare() {};
     // getters
     /** @return the rank of the matrix A */
-    Real const& rank() const { return rank_;}
+    Integer const& rank() const { return rank_;}
     /** @return the matrix A */
     inline ArrayA const& a() const { return a_;}
     /** @return the matrix B */
@@ -123,7 +123,7 @@ class ILeastSquare: public IRunnerBase, public IRecursiveTemplate<Derived>
     /** Array of the solution (a vector if b is a vector, a matrix otherwise) */
     ArrayB x_;
     /** rank of matrix A*/
-    int rank_;
+    Integer rank_;
 };
 
 template<class Derived>

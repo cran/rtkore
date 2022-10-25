@@ -36,15 +36,6 @@
 #ifndef STK_RMATRIX_H
 #define STK_RMATRIX_H
 
-#include <Arrays/include/STK_ExprBaseVisitor.h>
-#include <Arrays/include/STK_ExprBaseDot.h>
-#include <Arrays/include/STK_ExprBaseProduct.h>
-
-#include <Arrays/include/STK_ArrayBaseApplier.h>
-#include <Arrays/include/STK_ArrayBaseAssign.h>
-#include <Arrays/include/STK_ArrayBaseInitializer.h>
-
-
 namespace STK
 {
 
@@ -75,7 +66,9 @@ struct Traits< RMatrix<Type_> >
     typedef Void Number;
 
     typedef Type_ Type;
-    typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ReturnType;
+    typedef typename RemoveConst<Type_>::Type const& TypeConst;
 
    enum
     {
@@ -105,7 +98,9 @@ struct Traits< RowRMatrix<Type_> >
     typedef Void Number;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ReturnType;
+    typedef typename RemoveConst<Type_>::Type const& TypeConst;
 
    enum
     {
@@ -135,7 +130,9 @@ struct Traits< ColRMatrix<Type_> >
     typedef Void Number;
 
     typedef Type_                Type;
-    typedef typename RemoveConst<Type>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ConstReturnType;
+    typedef typename RemoveConst<Type_>::Type const& ReturnType;
+    typedef typename RemoveConst<Type_>::Type const& TypeConst;
 
    enum
     {
@@ -159,6 +156,9 @@ class RMatrix: public ArrayBase< RMatrix<Type_> >, public TRef<1>
 
     typedef typename hidden::Traits<RMatrix<Type_> >::Type Type;
     typedef typename hidden::Traits<RMatrix<Type_> >::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<RMatrix<Type_> >::ReturnType ReturnType;
+    typedef typename hidden::Traits<RMatrix<Type_> >::TypeConst TypeConst;
+
     enum
     {
       structure_ = hidden::Traits<RMatrix<Type_> >::structure_,
@@ -239,12 +239,18 @@ class RMatrix: public ArrayBase< RMatrix<Type_> >, public TRef<1>
    /** @return a constant reference on element (i,j)
      *  @param i, j indexes of the row and of the column
      **/
-    inline ConstReturnType elt2Impl(int i, int j) const
-    { return static_cast<ConstReturnType>(matrix_(i,j));}
+    inline ReturnType elt2Impl(int i, int j) const
+    { return static_cast<ReturnType>(matrix_(i,j));}
     /** @return a reference on the element (i,j)
      *  @param i, j indexes of the row and of the column
      **/
     inline Type& elt2Impl(int i, int j) { return (matrix_(i,j));}
+    /** set value
+     *  @param i,j index of the ith element and of the column
+     *  @param value value to set
+     **/
+    inline void setValueImpl(int i, int j, Type const& value)
+    { matrix_(i,j) = value;}
     /** overwrite the RMatrix with mat using Rcpp::operator=.
      *  @param mat the RMatrix to copy
      **/
@@ -299,6 +305,8 @@ class RowRMatrix: public ArrayBase< RowRMatrix<Type_> >, public TRef<1>
   public:
     typedef typename hidden::Traits<RowRMatrix<Type_> >::Type Type;
     typedef typename hidden::Traits<RowRMatrix<Type_> >::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<RowRMatrix<Type_> >::TypeConst TypeConst;
+
     enum
     {
       structure_ = hidden::Traits<RowRMatrix<Type_> >::structure_,
@@ -329,38 +337,43 @@ class RowRMatrix: public ArrayBase< RowRMatrix<Type_> >, public TRef<1>
     /** @return a constant reference on element (i,j)
       *  @param i, j indexes of the row and of the column
      **/
-     inline ConstReturnType elt2Impl(int i, int j) const
-     { return static_cast<ConstReturnType>(matrix_(i,j));}
-     /** @return a reference on the element (i,j)
-      *  @param i, j indexes of the row and of the column
-      **/
-     inline Type& elt2Impl(int i, int j) { return (matrix_(i,j));}
-     /** @return a constant reference on the jth element
+    inline ConstReturnType elt2Impl(int i, int j) const
+    { return static_cast<ConstReturnType>(matrix_(i,j));}
+    /** @return a reference on the element (i,j)
+     *  @param i, j indexes of the row and of the column
+     **/
+    inline Type& elt2Impl(int i, int j) { return (matrix_(i,j));}
+    /** @return a constant reference on the jth element
+     *  @param j index of the column
+     **/
+    inline ConstReturnType elt1Impl(int j) const
+    { return static_cast<ConstReturnType>(matrix_(rows_.begin(),j));}
+    /** @return a reference on the jth element
       *  @param j index of the column
-      **/
-      inline ConstReturnType elt1Impl(int j) const
-      { return static_cast<ConstReturnType>(matrix_(rows_.begin(),j));}
-      /** @return a reference on the jth element
-       *  @param j index of the column
-       **/
-      inline Type& elt1Impl( int j) { return (matrix_(rows_.begin(),j));}
-      /** operator = : overwrite the ColRMatrix with the right hand side T.
-       *  @param T the container to copy
-       **/
-      template<class Rhs>
-      RowRMatrix& operator=( ExprBase<Rhs> const& T)
-      {
-        if ( (T.range()!=cols_) )
-        { STKRUNTIME_ERROR_NO_ARG(ColRMatrix::operator=,size not match);}
-          for(int i= rows_.begin(); i< rows_.end(); ++i)
+     **/
+    inline Type& elt1Impl( int j) { return (matrix_(rows_.begin(),j));}
+    /** operator = : overwrite the ColRMatrix with the right hand side T.
+     *  @param T the container to copy
+     **/
+    template<class Rhs>
+    RowRMatrix& operator=( ExprBase<Rhs> const& T)
+    {
+      if ( (T.range()!=cols_) )
+      { STKRUNTIME_ERROR_NO_ARG(ColRMatrix::operator=,size not match);}
+        for(int i= rows_.begin(); i< rows_.end(); ++i)
+        {
+          for(int j= cols_.begin(); j< cols_.end(); ++j)
           {
-            for(int j= cols_.begin(); j< cols_.end(); ++j)
-            {
-              this->elt(i,j) = T.elt(j);
-          }
+            this->elt(i,j) = T.elt(j);
         }
-        return *this;
       }
+      return *this;
+    }
+    /** set value
+     *  @param i index of the ith element
+     *  @param value value to set
+     **/
+    inline void setValueImpl(int i, Type const& value) { elt1Impl(i) = value;}
 
   private:
     Rcpp::Matrix<Rtype_> matrix_;
@@ -374,6 +387,8 @@ class ColRMatrix: public ArrayBase< ColRMatrix<Type_> >, public TRef<1>
   public:
     typedef typename hidden::Traits<ColRMatrix<Type_> >::Type Type;
     typedef typename hidden::Traits<ColRMatrix<Type_> >::ConstReturnType ConstReturnType;
+    typedef typename hidden::Traits<ColRMatrix<Type_> >::TypeConst TypeConst;
+
     enum
     {
       structure_ = hidden::Traits<ColRMatrix<Type_> >::structure_,
@@ -403,37 +418,42 @@ class ColRMatrix: public ArrayBase< ColRMatrix<Type_> >, public TRef<1>
     inline ColRange const& colsImpl() const { return cols_;}
     /** @return a constant reference on element (i,j)
       *  @param i, j indexes of the row and of the column
-      **/
-     inline ConstReturnType elt2Impl(int i, int j) const
-     { return static_cast<ConstReturnType>(matrix_(i,j));}
-     /** @return a reference on the element (i,j)
-      *  @param i, j indexes of the row and of the column
-      **/
-     inline Type& elt2Impl(int i, int j) { return (matrix_(i,j));}
-     /** @return a constant reference on the ith element
+     **/
+    inline ConstReturnType elt2Impl(int i, int j) const
+    { return static_cast<ConstReturnType>(matrix_(i,j));}
+    /** @return a reference on the element (i,j)
+     *  @param i, j indexes of the row and of the column
+     **/
+    inline Type& elt2Impl(int i, int j) { return (matrix_(i,j));}
+    /** @return a constant reference on the ith element
       *  @param i index of the row
-      **/
-      inline ConstReturnType elt1Impl(int i) const
-      { return static_cast<ConstReturnType>(matrix_(i,cols_.begin()));}
-      /** @return a reference on the ith element
-       *  @param i index of the row
-       **/
-      inline Type& elt1Impl(int i) { return (matrix_(i,cols_.begin()));}
-      /** operator = : overwrite the ColRMatrix with the right hand side T.
-       *  @param T the container to copy
-       **/
-      template<class Rhs>
-      ColRMatrix& operator=( ExprBase<Rhs> const& T)
+     **/
+    inline ConstReturnType elt1Impl(int i) const
+    { return static_cast<ConstReturnType>(matrix_(i,cols_.begin()));}
+    /** @return a reference on the ith element
+     *  @param i index of the row
+     **/
+    inline Type& elt1Impl(int i) { return (matrix_(i,cols_.begin()));}
+    /** operator = : overwrite the ColRMatrix with the right hand side T.
+     *  @param T the container to copy
+     **/
+    template<class Rhs>
+    ColRMatrix& operator=( ExprBase<Rhs> const& T)
+    {
+      if ( (T.range()!=rows_) )
+      { STKRUNTIME_ERROR_NO_ARG(ColRMatrix::operator=,size not match);}
+      for(int j= cols_.begin(); j< cols_.end(); ++j)
       {
-        if ( (T.range()!=rows_) )
-        { STKRUNTIME_ERROR_NO_ARG(ColRMatrix::operator=,size not match);}
-        for(int j= cols_.begin(); j< cols_.end(); ++j)
-        {
-          for(int i= rows_.begin(); i< rows_.end(); ++i)
-          { this->elt(i,j) = T.elt(i); }
-        }
-        return *this;
+        for(int i= rows_.begin(); i< rows_.end(); ++i)
+        { this->elt(i,j) = T.elt(i); }
       }
+      return *this;
+    }
+    /** set value
+     *  @param i index of the ith element
+     *  @param value value to set
+     **/
+    inline void setValueImpl(int i, Type const& value) { elt1Impl(i) = value;}
 
   private:
     Rcpp::Matrix<Rtype_> matrix_;
