@@ -1,6 +1,12 @@
 \name{NEWS}
 \title{News for Package 'rtkore}
 
+\section{Changes in rtkore version 1.6.9 (2023-12-13)}{
+  \itemize{
+    \item Modifying Makevars in order to compile on new Windows platform
+  }
+}
+
 \section{Changes in rtkore version 1.6.0 (2019-01-07)}{
   \itemize{
     \item C++ 11 chosen by default
