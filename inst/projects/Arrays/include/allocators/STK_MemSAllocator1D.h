@@ -624,7 +624,7 @@ MemSAllocator1D<Type_, NzMax_>& STK::MemSAllocator1D<Type_, NzMax_>::move(const 
   p_idx_->move(T.p_idx_);
   p_val_->move(T.p_val_);
   range_ = T.range_;
-  this->ref_ = T.ref_;
+  setRef(T.ref());
   return *this;
 }
 

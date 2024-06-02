@@ -1,9 +1,9 @@
 Package: rtkore
 Type: Package
 Title: 'STK++' Core Library Integration to 'R' using 'Rcpp'
-Version: 1.6.10
+Version: 1.6.12
 Encoding: UTF-8
-Date: 2023-12-12
+Date: 2024-06-01
 Authors@R: c( person("Serge", "Iovleff", role=c("aut","cre"), email="serge.iovleff@stkpp.org")
             , person("Parmeet", "Bhatia", role="ctb", email="bhatia.parmeet@gmail.com"))
 Copyright: Inria, University Lille 1 and specifically inst/COPYRIGHTS
@@ -27,9 +27,9 @@ URL: http://www.stkpp.org
 NeedsCompilation: yes
 SystemRequirements: GNU make
 Collate: 'rtkoreFlags.R' 'inlineCxxPlugin.R'
-RoxygenNote: 7.1.2
-Packaged: 2023-12-14 20:47:54 UTC; iovleff
+RoxygenNote: 7.3.1
+Packaged: 2024-06-01 19:43:08 UTC; iovleff
 Author: Serge Iovleff [aut, cre],
   Parmeet Bhatia [ctb]
 Repository: CRAN
-Date/Publication: 2023-12-15 00:50:02 UTC
+Date/Publication: 2024-06-02 11:20:02 UTC
