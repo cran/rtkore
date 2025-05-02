@@ -56,7 +56,7 @@ namespace Csv
  *  @brief Export data to a Csv.
  *
  * An ExportToCsv object creates a @c ReadWriteCsv from a container of data
- * like a DataFrame, a Vector, a point or a ArrayXX. The data are stored in a
+ * like a DataFrame, a Vector, a Point or any Array. The data are stored in a
  * String format in the @c ReadWriteCsv struct.
  **/
 class ExportToCsv
@@ -121,6 +121,37 @@ class ExportToCsv
       }
     }
 
+    /** Instantiates an instance of ExportToCvs with a general array
+     *  @param A the ITContainer to export
+     *  @param prefix the prefix ot the name to set to the variable
+     **/
+    template <class Container >
+    ExportToCsv( ITContainer<Container> const& A
+               , bool byCol = true
+               , String const& prefix=Csv::DEFAULT_COLUMN_PREFIX)
+               : p_data_(new ReadWriteCsv())
+    {
+      p_data_->setWithNames(true);
+      if (byCol)
+      {
+        for(int iVar = A.beginCols(); iVar<A.endCols(); iVar++)
+        {
+          // add an empty string variable (an empty column)
+          p_data_->push_back(Variable<String>(A.rows(), prefix));
+          for (int iRow=A.beginRows(); iRow<A.endRows(); iRow++)
+          { p_data_->back()[iRow] = typeToString(A.at(iRow,iVar));}
+        }
+      }
+      else
+        for(int iVar = A.beginRows(); iVar<A.endRows(); iVar++)
+          {
+            // add an empty string variable (an empty column)
+            p_data_->push_back(Variable<String>(A.cols(), prefix));
+            for (int iRow=A.beginCols(); iRow<A.endCols(); iRow++)
+            { p_data_->back()[iRow] = typeToString(A.at(iVar,iRow));}
+      }
+    }
+
     /** Instantiates an instance of ExportToCvs with a vector.
      *  @param A the ITContainer to export
      *  @param byCol export the container as a column vector or a raw vector ?
@@ -179,25 +210,6 @@ class ExportToCsv
           }
         }
     }
-    /** Instantiates an instance of ExportToCvs with a general array
-     *  @param A the IArray2d to export
-     *  @param prefix the prefix ot the name to set to the variable
-     **/
-    template <class Container >
-    ExportToCsv( ITContainer<Container> const& A
-               , String const& prefix=Csv::DEFAULT_COLUMN_PREFIX)
-               : p_data_(new ReadWriteCsv())
-    {
-      p_data_->setWithNames(true);
-      for(int iVar = A.beginCols(); iVar<A.endCols(); iVar++)
-      {
-        // add an empty string variable (an empty column)
-        p_data_->push_back(Variable<String>(A.rows(), prefix));
-        for (int iRow=A.beginRows(); iRow<A.endRows(); iRow++)
-        { p_data_->back()[iRow] = typeToString(A.at(iRow,iVar));}
-      }
-    }
-
     /** destructor.
      *  The protected field p_data_ will be liberated.
      **/
